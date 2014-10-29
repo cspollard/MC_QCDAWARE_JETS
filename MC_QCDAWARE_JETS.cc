@@ -3,7 +3,13 @@
 #include "Rivet/Projections/FinalPartons.hh"
 #include "Rivet/Projections/FastJets.hh"
 #include "fastjet/JetDefinition.hh"
+#include "fastjet/ClusterSequence.hh"
 #include "fastjet/contrib/QCDAware.hh"
+
+
+using namespace std;
+using namespace fastjet;
+using namespace fastjet::contrib;
 
 namespace Rivet {
 
@@ -24,14 +30,11 @@ namespace Rivet {
             void init() {
 
                 FinalPartons fps = FinalPartons();
-
                 addProjection(fps, "FinalPartons");
 
-                fastjet::contrib::QCDAware *qcdaware =
-                    new fastjet::contrib::QCDAware(new fastjet::contrib::AntiKtMeasure(0.4));
-
-                addProjection(FastJets(fps, qcdaware), "AntiKt04FinalPartonJets");
-
+                fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure> *dm =
+                    new fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure>(0.4);
+                qcdaware = new fastjet::contrib::QCDAware(dm);
             }
 
 
@@ -44,26 +47,37 @@ namespace Rivet {
                 const Particles& partons =
                     applyProjection<FinalPartons>(event, "FinalPartons").particles();
 
-                const Jets& partonJets =
-                    applyProjection<FastJets>(event, "AntiKt04FinalPartonJets").jetsByPt();
+                vector<PseudoJet> pjs;
+                foreach (const Particle& p, partons) {
+                    PseudoJet pj = p;
+                    int id = p.pid();
+                    if (id == 21 || id == 22)
+                        id = 0;
 
+                    pj.set_user_index(id);
+                    pjs.push_back(pj);
+                }
+
+
+                ClusterSequence qcdawarecs(pjs, qcdaware);
+                const vector<PseudoJet> partonJets = sorted_by_pt(qcdawarecs.inclusive_jets(25*GeV));
 
                 cout << "FINAL PARTONS" << endl;
                 foreach (const Particle& p, partons) {
-                    cout << "pid pt eta : "
+                    cout << "pid pt eta phi : "
                         << p.pid() << " "
                         << p.pt() << " "
-                        << p.eta() << endl;
+                        << p.eta() << " "
+                        << p.phi() << endl;
                 }
 
                 cout << endl << "FINAL PARTON JETS" << endl;
-                foreach (const Jet& j, partonJets) {
-                    const fastjet::PseudoJet& p = j.pseudojet();
-
-                    cout << "pid pt eta : "
-                        << p.user_index() << " "
-                        << p.pt() << " "
-                        << p.eta() << endl;
+                foreach (const PseudoJet& j, partonJets) {
+                    cout << "pid pt eta phi : "
+                        << j.user_index() << " "
+                        << j.pt() << " "
+                        << j.eta() << " "
+                        << j.phi() << endl;
                 }
 
                 /// @todo Do the event by event analysis here
@@ -85,17 +99,7 @@ namespace Rivet {
 
 
         private:
-
-            // Data members like post-cuts event weight counters go here
-
-
-        private:
-
-            /// @name Histograms
-            //@{
-            Profile1DPtr _h_XXXX;
-            Histo1DPtr _h_YYYY;
-            //@}
+            QCDAware *qcdaware;
 
 
     };

@@ -32,6 +32,8 @@ namespace Rivet {
                 FinalPartons fps = FinalPartons();
                 addProjection(fps, "FinalPartons");
 
+                addProjection(FastJets(fps, FastJets::ANTIKT, 0.4), "AntiKt04FinalPartonJets");
+
                 fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure> *dm =
                     new fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure>(0.4);
                 qcdaware = new fastjet::contrib::QCDAware(dm);
@@ -51,8 +53,12 @@ namespace Rivet {
                 foreach (const Particle& p, partons) {
                     PseudoJet pj = p;
                     int id = p.pid();
-                    if (id == 21 || id == 22)
+                    // TODO
+                    // TEST
+                    if (abs(id) < 7 || id == 21 || id == 22)
                         id = 0;
+                    // if (id == 21 || id == 22)
+                        // id = 0;
 
                     pj.set_user_index(id);
                     pjs.push_back(pj);
@@ -79,6 +85,17 @@ namespace Rivet {
                         << j.eta() << " "
                         << j.phi() << endl;
                 }
+
+                const Jets& testjets =
+                    applyProjection<FastJets>(event, "AntiKt04FinalPartonJets").jetsByPt(25*GeV);
+                cout << endl << "FINAL PARTON TEST JETS" << endl;
+                foreach (const Jet& j, testjets) {
+                    cout << "pt eta phi : "
+                        << j.pt() << " "
+                        << j.eta() << " "
+                        << j.phi() << endl;
+                }
+
 
                 /// @todo Do the event by event analysis here
 

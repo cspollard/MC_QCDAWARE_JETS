@@ -1,10 +1,11 @@
 // -*- C++ -*-
 #include "Rivet/Analysis.hh"
-#include "Rivet/Projections/FinalPartons.hh"
 #include "Rivet/Projections/FastJets.hh"
 #include "fastjet/JetDefinition.hh"
 #include "fastjet/ClusterSequence.hh"
 #include "fastjet/contrib/QCDAware.hh"
+
+#include "FinalPartons.hh"
 
 
 using namespace std;
@@ -33,10 +34,19 @@ namespace Rivet {
                 addProjection(fps, "FinalPartons");
 
                 addProjection(FastJets(fps, FastJets::ANTIKT, 0.4), "AntiKt04FinalPartonJets");
+                addProjection(FastJets(fps, FastJets::KT, 0.4), "Kt04FinalPartonJets");
+                addProjection(FastJets(fps, FastJets::CAM, 0.4), "CA04FinalPartonJets");
 
-                fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure> *dm =
+                fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure> *aktdm =
                     new fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure>(0.4);
-                qcdaware = new fastjet::contrib::QCDAware(dm);
+                fastjet::contrib::QCDAwareDistanceMeasure<KtMeasure> *ktdm =
+                    new fastjet::contrib::QCDAwareDistanceMeasure<KtMeasure>(0.4);
+                fastjet::contrib::QCDAwareDistanceMeasure<CAMeasure> *cadm =
+                    new fastjet::contrib::QCDAwareDistanceMeasure<CAMeasure>(0.4);
+
+                qcdawareakt = new fastjet::contrib::QCDAware(aktdm);
+                qcdawarekt = new fastjet::contrib::QCDAware(ktdm);
+                qcdawareca = new fastjet::contrib::QCDAware(cadm);
             }
 
 
@@ -53,23 +63,24 @@ namespace Rivet {
                 foreach (const Particle& p, partons) {
                     PseudoJet pj = p;
                     int id = p.pid();
-                    // TODO
-                    // TEST
-                    if (abs(id) < 7 || id == 21 || id == 22)
+                    if (id == 21 || id == 22)
                         id = 0;
-                    // if (id == 21 || id == 22)
-                        // id = 0;
 
                     pj.set_user_index(id);
                     pjs.push_back(pj);
                 }
 
 
-                ClusterSequence qcdawarecs(pjs, qcdaware);
-                const vector<PseudoJet> partonJets = sorted_by_pt(qcdawarecs.inclusive_jets(25*GeV));
+                ClusterSequence qcdawareaktcs(pjs, qcdawareakt);
+                ClusterSequence qcdawarektcs(pjs, qcdawarekt);
+                ClusterSequence qcdawarecacs(pjs, qcdawareca);
+
+                const vector<PseudoJet> aktPartonJets = sorted_by_pt(qcdawareaktcs.inclusive_jets(5*GeV));
+                const vector<PseudoJet> ktPartonJets = sorted_by_pt(qcdawarektcs.inclusive_jets(5*GeV));
+                const vector<PseudoJet> caPartonJets = sorted_by_pt(qcdawarecacs.inclusive_jets(5*GeV));
 
                 cout << "FINAL PARTONS" << endl;
-                foreach (const Particle& p, partons) {
+                foreach (const Particle& p, sortByPt(partons)) {
                     cout << "pid pt eta phi : "
                         << p.pid() << " "
                         << p.pt() << " "
@@ -77,8 +88,8 @@ namespace Rivet {
                         << p.phi() << endl;
                 }
 
-                cout << endl << "FINAL PARTON JETS" << endl;
-                foreach (const PseudoJet& j, partonJets) {
+                cout << endl << "FINAL PARTON AKT JETS" << endl;
+                foreach (const PseudoJet& j, aktPartonJets) {
                     cout << "pid pt eta phi : "
                         << j.user_index() << " "
                         << j.pt() << " "
@@ -86,10 +97,45 @@ namespace Rivet {
                         << j.phi() << endl;
                 }
 
-                const Jets& testjets =
-                    applyProjection<FastJets>(event, "AntiKt04FinalPartonJets").jetsByPt(25*GeV);
-                cout << endl << "FINAL PARTON TEST JETS" << endl;
-                foreach (const Jet& j, testjets) {
+                cout << endl << "FINAL PARTON AKT TEST JETS" << endl;
+                foreach (const Jet& j,
+                        applyProjection<FastJets>(event, "AntiKt04FinalPartonJets").jetsByPt(5*GeV)) {
+                    cout << "pt eta phi : "
+                        << j.pt() << " "
+                        << j.eta() << " "
+                        << j.phi() << endl;
+                }
+
+                cout << endl << "FINAL PARTON KT JETS" << endl;
+                foreach (const PseudoJet& j, ktPartonJets) {
+                    cout << "pid pt eta phi : "
+                        << j.user_index() << " "
+                        << j.pt() << " "
+                        << j.eta() << " "
+                        << j.phi() << endl;
+                }
+
+                cout << endl << "FINAL PARTON KT TEST JETS" << endl;
+                foreach (const Jet& j,
+                        applyProjection<FastJets>(event, "Kt04FinalPartonJets").jetsByPt(5*GeV)) {
+                    cout << "pt eta phi : "
+                        << j.pt() << " "
+                        << j.eta() << " "
+                        << j.phi() << endl;
+                }
+
+                cout << endl << "FINAL PARTON CA JETS" << endl;
+                foreach (const PseudoJet& j, caPartonJets) {
+                    cout << "pid pt eta phi : "
+                        << j.user_index() << " "
+                        << j.pt() << " "
+                        << j.eta() << " "
+                        << j.phi() << endl;
+                }
+
+                cout << endl << "FINAL PARTON CA TEST JETS" << endl;
+                foreach (const Jet& j,
+                        applyProjection<FastJets>(event, "CA04FinalPartonJets").jetsByPt(5*GeV)) {
                     cout << "pt eta phi : "
                         << j.pt() << " "
                         << j.eta() << " "
@@ -116,7 +162,9 @@ namespace Rivet {
 
 
         private:
-            QCDAware *qcdaware;
+            QCDAware *qcdawareakt;
+            QCDAware *qcdawarekt;
+            QCDAware *qcdawareca;
 
 
     };

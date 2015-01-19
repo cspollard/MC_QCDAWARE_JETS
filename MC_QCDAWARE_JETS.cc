@@ -61,12 +61,8 @@ namespace Rivet {
 
                 vector<PseudoJet> pjs;
                 foreach (const Particle& p, partons) {
-                    PseudoJet pj = p;
-                    int id = p.pid();
-                    if (id == 21 || id == 22)
-                        id = 0;
-
-                    pj.set_user_index(id);
+                    PseudoJet pj = p.pseudojet();
+                    pj.set_user_index(p.pid());
                     pjs.push_back(pj);
                 }
 

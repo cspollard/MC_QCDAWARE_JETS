@@ -33,6 +33,9 @@ namespace Rivet {
                 FinalPartons fps = FinalPartons();
                 addProjection(fps, "FinalPartons");
 
+                VisibleFinalState vfs = VisibleFinalState();
+                addProjection(vfs, "VisibleFinalState");
+
                 addProjection(FastJets(fps, FastJets::ANTIKT, 0.4), "AntiKt04FinalPartonJets");
                 addProjection(FastJets(fps, FastJets::KT, 0.4), "Kt04FinalPartonJets");
                 addProjection(FastJets(fps, FastJets::CAM, 0.4), "CA04FinalPartonJets");
@@ -56,9 +59,11 @@ namespace Rivet {
 
                 const double weight = event.weight();
 
+                // first get all final partons
                 const Particles& partons =
                     applyProjection<FinalPartons>(event, "FinalPartons").particles();
 
+                // first get the qcd-aware parton jets
                 vector<PseudoJet> pjs;
                 foreach (const Particle& p, partons) {
                     PseudoJet pj = p.pseudojet();
@@ -75,72 +80,115 @@ namespace Rivet {
                 const vector<PseudoJet> ktPartonJets = sorted_by_pt(qcdawarektcs.inclusive_jets(5*GeV));
                 const vector<PseudoJet> caPartonJets = sorted_by_pt(qcdawarecacs.inclusive_jets(5*GeV));
 
-                cout << "FINAL PARTONS" << endl;
-                foreach (const Particle& p, sortByPt(partons)) {
-                    cout << "pid pt eta phi : "
-                        << p.pid() << " "
-                        << p.pt() << " "
-                        << p.eta() << " "
-                        << p.phi() << endl;
+
+                // TODO
+                // what's the right way to ghost associate the
+                // labeling jets?
+                // first add visible particle pseudojets
+                // then add parton jet pseudojets w/ negative indices
+                // when looking up parton jet indices, we have to
+                // subtract nParticles and the size of previous jet
+                // collections.
+                pjs.clear();
+
+                const Particles& visibleParts =
+                    applyProjection<VisibleFinalState>(event, "VisibleFinalState").particles();
+
+                size_t nParts = visibleParts.size();
+                for (size_t iPart = 0; iPart < nParts; iPart++) {
+                    const Particle& p = visibleParts.at(iPart);
+                    PseudoJet pj = p.pseudojet();
+                    pj.set_user_index(iPart);
+                    pjs.push_back(pj);
                 }
+
+                size_t nAktPartJets = aktPartonJets.size();
+                for (size_t iJet = 0; iJet < nAktPartJets; iJet++) {
+                    PseudoJet pj(aktPartonJets.at(iJet));
+                    pj.reset_PtYPhiM(pj.pt()*1e-10, pj.rap(), pj.phi(), pj.m()*1e-10);
+                    pj.set_user_index(-iJet);
+                    pjs.push_back(pj);
+                }
+
+                size_t nKtPartJets = ktPartonJets.size();
+                for (size_t iJet = 0; iJet < nKtPartJets; iJet++) {
+                    PseudoJet pj(ktPartonJets.at(iJet));
+                    pj.set_user_index(-(nAktPartJets+iJet));
+                    pj.reset_PtYPhiM(pj.pt()*1e-10, pj.rap(), pj.phi(), pj.m()*1e-10);
+                    pjs.push_back(pj);
+                }
+
+                size_t nCAPartJets = caPartonJets.size();
+                for (size_t iJet = 0; iJet < nCAPartJets; iJet++) {
+                    PseudoJet pj(caPartonJets.at(iJet));
+                    pj.reset_PtYPhiM(pj.pt()*1e-10, pj.rap(), pj.phi(), pj.m()*1e-10);
+                    pj.set_user_index(-(nAktPartJets+nKtPartJets+iJet));
+                    pjs.push_back(pj);
+                }
+
+                ClusterSequence akt04cs(pjs, JetDefinition(antikt_algorithm, 0.4));
+                ClusterSequence kt04cs(pjs, JetDefinition(kt_algorithm, 0.4));
+                ClusterSequence ca04cs(pjs, JetDefinition(cambridge_algorithm, 0.4));
+
+                const vector<PseudoJet> aktJets = sorted_by_pt(akt04cs.inclusive_jets(5*GeV));
+                const vector<PseudoJet> ktJets = sorted_by_pt(kt04cs.inclusive_jets(5*GeV));
+                const vector<PseudoJet> caJets = sorted_by_pt(ca04cs.inclusive_jets(5*GeV));
 
                 cout << endl << "FINAL PARTON AKT JETS" << endl;
                 foreach (const PseudoJet& j, aktPartonJets) {
-                    cout << "pid pt eta phi : "
+                    cout << "pid pt eta phi: "
                         << j.user_index() << " "
                         << j.pt() << " "
                         << j.eta() << " "
                         << j.phi() << endl;
                 }
 
-                cout << endl << "FINAL PARTON AKT TEST JETS" << endl;
-                foreach (const Jet& j,
-                        applyProjection<FastJets>(event, "AntiKt04FinalPartonJets").jetsByPt(5*GeV)) {
-                    cout << "pt eta phi : "
+                cout << endl << "FINAL PARTICLE AKT JETS" << endl;
+                foreach (const PseudoJet& j, aktJets) {
+                    cout << "pt eta phi: "
                         << j.pt() << " "
                         << j.eta() << " "
                         << j.phi() << endl;
+
+                    cout << "associated parton jets:" << endl;
+                    foreach (const PseudoJet& pj, j.constituents()) {
+                        // not a ghost-associated pseudojet
+                        if (pj.user_index() >= 0) continue;
+
+                        int idx = abs(pj.user_index());
+
+                        // TODO
+                        // this is stupid.
+                        PseudoJet labjet;
+                        if (idx >= nAktPartJets + nKtPartJets) {
+                            labjet = caPartonJets.at(idx - nAktPartJets - nKtPartJets);
+                            cout << "\tcamkt pid pt eta phi: "
+                                << labjet.user_index() << " "
+                                << labjet.pt() << " "
+                                << labjet.eta() << " "
+                                << labjet.phi() << endl;
+                        } else if (idx >= nAktPartJets) {
+                            labjet = ktPartonJets.at(idx - nAktPartJets);
+                            cout << "\tkt pid pt eta phi: "
+                                << labjet.user_index() << " "
+                                << labjet.pt() << " "
+                                << labjet.eta() << " "
+                                << labjet.phi() << endl;
+                        } else if (idx >= 0) {
+                            labjet = aktPartonJets.at(idx);
+                            cout << "\takt pid pt eta phi: "
+                                << labjet.user_index() << " "
+                                << labjet.pt() << " "
+                                << labjet.eta() << " "
+                                << labjet.phi() << endl;
+                        } else {
+                            cout << "ERROR!!! This should be a ghost particle, but it isnt?!" << endl;
+                        }
+                    }
                 }
 
-                cout << endl << "FINAL PARTON KT JETS" << endl;
-                foreach (const PseudoJet& j, ktPartonJets) {
-                    cout << "pid pt eta phi : "
-                        << j.user_index() << " "
-                        << j.pt() << " "
-                        << j.eta() << " "
-                        << j.phi() << endl;
-                }
 
-                cout << endl << "FINAL PARTON KT TEST JETS" << endl;
-                foreach (const Jet& j,
-                        applyProjection<FastJets>(event, "Kt04FinalPartonJets").jetsByPt(5*GeV)) {
-                    cout << "pt eta phi : "
-                        << j.pt() << " "
-                        << j.eta() << " "
-                        << j.phi() << endl;
-                }
-
-                cout << endl << "FINAL PARTON CA JETS" << endl;
-                foreach (const PseudoJet& j, caPartonJets) {
-                    cout << "pid pt eta phi : "
-                        << j.user_index() << " "
-                        << j.pt() << " "
-                        << j.eta() << " "
-                        << j.phi() << endl;
-                }
-
-                cout << endl << "FINAL PARTON CA TEST JETS" << endl;
-                foreach (const Jet& j,
-                        applyProjection<FastJets>(event, "CA04FinalPartonJets").jetsByPt(5*GeV)) {
-                    cout << "pt eta phi : "
-                        << j.pt() << " "
-                        << j.eta() << " "
-                        << j.phi() << endl;
-                }
-
-
-                /// @todo Do the event by event analysis here
-
+                return;
             }
 
 

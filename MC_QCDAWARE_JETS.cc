@@ -7,7 +7,7 @@
 
 #include "FinalPartons.hh"
 
-#include "RivetUserInfo.hh"
+#include "UserInfoParticle.hh"
 
 
 using namespace std;
@@ -67,15 +67,16 @@ namespace Rivet {
 
                 // first get the qcd-aware parton jets
                 vector<PseudoJet> pjs;
-                foreach (const Particle& p, partons) {
-                    PseudoJet pj = p.pseudojet();
+                PseudoJet tmpPJ;
+                foreach (const Particle& parton, partons) {
+                    tmpPJ = parton.pseudojet();
                     // user_info points to particle.
-                    pj.set_user_info(new RivetUserInfo(p));
+                    tmpPJ.set_user_info(new UserInfoParticle(parton));
 
                     // user_index used for flavor-aware clustering.
-                    pj.set_user_index(p.pid());
+                    tmpPJ.set_user_index(parton.pid());
 
-                    pjs.push_back(pj);
+                    pjs.push_back(tmpPJ);
                 }
 
 
@@ -83,11 +84,17 @@ namespace Rivet {
                 ClusterSequence qcdawarektcs(pjs, qcdawarekt);
                 ClusterSequence qcdawarecacs(pjs, qcdawareca);
 
-                const vector<PseudoJet> aktPartonJets = sorted_by_pt(qcdawareaktcs.inclusive_jets(5*GeV));
-                const vector<PseudoJet> ktPartonJets = sorted_by_pt(qcdawarektcs.inclusive_jets(5*GeV));
-                const vector<PseudoJet> caPartonJets = sorted_by_pt(qcdawarecacs.inclusive_jets(5*GeV));
+                const vector<PseudoJet> aktPartonJets =
+                    sorted_by_pt(qcdawareaktcs.inclusive_jets(5*GeV));
+
+                const vector<PseudoJet> ktPartonJets =
+                    sorted_by_pt(qcdawarektcs.inclusive_jets(5*GeV));
+
+                const vector<PseudoJet> caPartonJets =
+                    sorted_by_pt(qcdawarecacs.inclusive_jets(5*GeV));
 
 
+                // now particle jets
                 const Particles& visibleParts =
                     applyProjection<VisibleFinalState>(event, "VisibleFinalState").particles();
 
@@ -95,25 +102,48 @@ namespace Rivet {
                 // constituents for particle jets
                 pjs.clear();
                 foreach (const Particle& p, visibleParts) {
-                    PseudoJet pj = p.pseudojet();
-                    pj.set_user_info(new RivetUserInfo(p));
-                    pjs.push_back(pj);
+                    tmpPJ = p.pseudojet();
+                    tmpPJ.set_user_info(new UserInfoParticle(p));
+                    pjs.push_back(tmpPJ);
                 }
 
-                // ghost association
-                foreach (const PseudoJet& pj, aktPartonJets) {
-                    const Particle p(pj.user_index(), momentum(pj));
-                    pjs.push_back(ghost(p, "GhostAktPartonJet"));
-                }
+                // ghost association of parton jets to particle jets
+                foreach (const PseudoJet& aktPJ, aktPartonJets)
+                    pjs.push_back(ghost(Particle(aktPJ.user_index(), momentum(aktPJ)),
+                                    "GhostAktPartonJet"));
 
-                foreach (const PseudoJet& pj, ktPartonJets) {
-                    const Particle p(pj.user_index(), momentum(pj));
-                    pjs.push_back(ghost(p, "GhostKtPartonJet"));
-                }
+                foreach (const PseudoJet& ktPJ, ktPartonJets)
+                    pjs.push_back(ghost(Particle(ktPJ.user_index(), momentum(ktPJ)),
+                                    "GhostKtPartonJet"));
 
-                foreach (const PseudoJet& pj, ktPartonJets) {
-                    const Particle p(pj.user_index(), momentum(pj));
-                    pjs.push_back(ghost(p, "GhostCAPartonJet"));
+                foreach (const PseudoJet& caPJ, caPartonJets)
+                    pjs.push_back(ghost(Particle(caPJ.user_index(), momentum(caPJ)),
+                                    "GhostCAPartonJet"));
+
+
+                Particle tmpPart;
+                UserInfoParticle uip;
+                foreach (const PseudoJet& pj, pjs) {
+                    cout << "new pseudojet in pjs:" << endl;
+                    cout << "user_index pt eta phi: "
+                        << pj.user_index() << " "
+                        << pj.pt() << " "
+                        << pj.eta() << " "
+                        << pj.phi() << endl;
+
+                    uip = pj.user_info<UserInfoParticle>();
+
+                    cout << "part label: " << uip.str() << endl;
+
+                    tmpPart = uip.particle();
+                    cout << "\t" << uip.str() << endl
+                        << "\tpid pt eta phi: "
+                        << tmpPart.pid() << " "
+                        << tmpPart.pt() << " "
+                        << tmpPart.eta() << " "
+                        << tmpPart.phi() << endl;
+
+                    cout << endl;
                 }
 
 
@@ -152,6 +182,7 @@ namespace Rivet {
                         << j.phi() << endl;
                 }
 
+
                 cout << endl << "FINAL PARTICLE AKT JETS" << endl;
                 foreach (const PseudoJet& j, aktJets) {
                     cout << "pt eta phi: "
@@ -160,20 +191,19 @@ namespace Rivet {
                         << j.phi() << endl;
 
                     cout << "associated parton jets:" << endl;
-                    foreach (const PseudoJet& pj, j.constituents()) {
-                        const RivetUserInfo& rui =
-                            pj.user_info<RivetUserInfo>();
+                    foreach (const PseudoJet& p, j.constituents()) {
+                        uip = p.user_info<UserInfoParticle>();
 
                         // not a ghost-associated pseudojet
-                        if (rui.str() == "") continue;
+                        if (uip.str() == "") continue;
 
-                        const Particle& labjet = rui.get<Particle>();
-                        cout << "\t" << rui.str() << endl
+                        tmpPart = uip.particle();
+                        cout << "\t" << uip.str() << endl
                             << "\tpid pt eta phi: "
-                            << labjet.pid() << " "
-                            << labjet.pt() << " "
-                            << labjet.eta() << " "
-                            << labjet.phi() << endl;
+                            << tmpPart.pid() << " "
+                            << tmpPart.pt() << " "
+                            << tmpPart.eta() << " "
+                            << tmpPart.phi() << endl;
                     }
                 }
 

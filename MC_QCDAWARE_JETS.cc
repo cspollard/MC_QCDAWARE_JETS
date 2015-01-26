@@ -161,18 +161,16 @@ namespace Rivet {
 
                     cout << "associated parton jets:" << endl;
                     foreach (const PseudoJet& pj, j.constituents()) {
-                        cout << "const RivetUserInfo& rui =" << endl;
                         const RivetUserInfo& rui =
                             pj.user_info<RivetUserInfo>();
 
                         // not a ghost-associated pseudojet
                         if (rui.str() == "") continue;
 
-                        cout << "const Particle& labjet = rui.get<Particle>();" << endl;
-                        const ParticleBase& labjet = rui.get<Particle>();
+                        const Particle& labjet = rui.get<Particle>();
                         cout << "\t" << rui.str() << endl
                             << "\tpid pt eta phi: "
-                            // << labjet.pid() << " "
+                            << labjet.pid() << " "
                             << labjet.pt() << " "
                             << labjet.eta() << " "
                             << labjet.phi() << endl;

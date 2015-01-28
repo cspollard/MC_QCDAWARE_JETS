@@ -7,15 +7,13 @@ namespace Rivet {
 
     bool FinalPartons::accept(const Particle& p) const {
 
-        int id = p.abspid();
-        if (id > 6 && id != 21 && id != 22)
+        if (!isParton(p) && !isPhoton(p))
             return false;
 
         // only getting gluons for some reason...
-        foreach (const Particle& c, p.children()) {
-            if (!c.isHadron())
+        foreach (const Particle& c, p.children())
+            if (isParton(c) || isPhoton(c))
                 return false;
-        }
 
         return _cuts->accept(p);
     }

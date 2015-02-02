@@ -1,8 +1,16 @@
-# BEGIN PLOT /MC_QCDAWARE_JETS/d01-x01-y01
-#Title=[Uncomment and insert title for histogram d01-x01-y01 here]
-#XLabel=[Uncomment and insert x-axis label for histogram d01-x01-y01 here]
-#YLabel=[Uncomment and insert y-axis label for histogram d01-x01-y01 here]
-# + any additional plot settings you might like, see make-plots documentation
+# BEGIN PLOT /*
+LogX=0
+LogY=0
+LogZ=0
+RatioPlot=0
 # END PLOT
 
-# ... add more histograms as you need them ...
+# BEGIN PLOT /*Dr
+XLabel = $dR / 0.4$
+YLabel = $\frac{d\sigma}{dR} \left(\frac{fb}{0.4}\right)$
+# END PLOT
+
+# BEGIN PLOT /*Dpt
+XLabel = $p_T$
+YLabel = $\frac{d\sigma}{dp_T} \left(\frac{fb}{GeV}\right)$
+# END PLOT

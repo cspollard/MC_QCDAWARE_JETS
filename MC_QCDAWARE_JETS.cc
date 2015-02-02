@@ -150,9 +150,9 @@ namespace Rivet {
                 ClusterSequence kt04cs(pjs, JetDefinition(kt_algorithm, 0.4));
                 ClusterSequence ca04cs(pjs, JetDefinition(cambridge_algorithm, 0.4));
 
-                const vector<PseudoJet> aktJets = sorted_by_pt(akt04cs.inclusive_jets(5*GeV));
-                const vector<PseudoJet> ktJets = sorted_by_pt(kt04cs.inclusive_jets(5*GeV));
-                const vector<PseudoJet> caJets = sorted_by_pt(ca04cs.inclusive_jets(5*GeV));
+                const vector<PseudoJet> aktJets = sorted_by_pt(akt04cs.inclusive_jets(25*GeV));
+                const vector<PseudoJet> ktJets = sorted_by_pt(kt04cs.inclusive_jets(25*GeV));
+                const vector<PseudoJet> caJets = sorted_by_pt(ca04cs.inclusive_jets(25*GeV));
 
                 foreach (const PseudoJet& j, aktJets) {
 

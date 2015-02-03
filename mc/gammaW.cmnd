@@ -1,0 +1,17 @@
+! 1) Beam settings.
+Beams:idA = 2212                   ! first beam, p = 2212, pbar = -2212
+Beams:idB = 2212                   ! second beam, p = 2212, pbar = -2212
+Beams:eCM = 13000.                 ! CM energy of collision, LHC
+
+! 2) Settings that are used in the main program.
+Main:numberOfEvents = 250000       ! number of events to generate
+Main:numberToList = 0              ! number of events to print
+Main:timesToShow = 20              ! show how far along run is this many times
+Main:timesAllowErrors = 10         ! abort run after this many flawed events
+Main:showChangedSettings = on      ! print changed flags/modes/parameters
+
+PhaseSpace:mHatMin=500
+
+WeakBosonAndParton:ffbar2Wgm=on
+24:onMode = off
+24:onIfAny = 11 12 13 14

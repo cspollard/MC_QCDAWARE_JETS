@@ -1,14 +1,18 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 CMNDFILE=$1
-HEPMCFILE=${1/cmnd/hepmc}
+HEPMCFILE=`mktemp`.hepmc
 LOGFILE=${1/cmnd/log}
 YODAFILE=${1/cmnd/yoda}
 
-mkfifo $HEPMC
+NEVT=$2
 
-run-pythia -s -i $CMNDFILE -o $HEPMCFILE 2>&1 > $LOGFILE
+mkfifo $HEPMCFILE
 
-rivet --pwd -a MC_QCDAWARE_JETS $HEPMCFILE -H $YODAFILE 2>&1 > $LOGFILE
+run-pythia -s -n $NEVT -e 13000 -i $CMNDFILE \
+    -o $HEPMCFILE > $LOGFILE 2>&1 &
+
+rivet --pwd -a MC_QCDAWARE_JETS $HEPMCFILE \
+    -H $YODAFILE > $LOGFILE 2>&1
 
 rm $HEPMCFILE

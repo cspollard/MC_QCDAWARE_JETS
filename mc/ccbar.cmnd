@@ -12,5 +12,4 @@ Main:showChangedSettings = on      ! print changed flags/modes/parameters
 
 PhaseSpace:mHatMin=500
 
-HardQCD:qqbar2qqbarNew=on
-HardQCD:qq2qq=on
+HardQCD:hardccbar=on

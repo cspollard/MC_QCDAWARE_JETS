@@ -38,9 +38,6 @@ namespace Rivet {
                 VisibleFinalState vfs = VisibleFinalState();
                 addProjection(vfs, "VisibleFinalState");
 
-                FinalState fsps = FinalState();
-                addProjection(fsps, "FinalState");
-
                 addProjection(FastJets(fps, FastJets::ANTIKT, 0.4), "AntiKt04FinalPartonJets");
                 addProjection(FastJets(fps, FastJets::KT, 0.4), "Kt04FinalPartonJets");
                 addProjection(FastJets(fps, FastJets::CAM, 0.4), "CA04FinalPartonJets");
@@ -121,13 +118,9 @@ namespace Rivet {
                 const Particles& visibleParts =
                     applyProjection<VisibleFinalState>(event, "VisibleFinalState").particles();
 
-                const Particles& allParts =
-                    applyProjection<FinalState>(event, "FinalState").particles();
-
-
                 // constituents for particle jets
                 pjs.clear();
-                foreach (const Particle& p, allParts) {
+                foreach (const Particle& p, visibleParts) {
                     tmpPJ = p.pseudojet();
                     tmpPJ.set_user_info(new UserInfoParticle(p));
                     pjs.push_back(tmpPJ);
@@ -245,12 +238,12 @@ namespace Rivet {
 
                 histos1D[basename + "Dr"] =
                     bookHisto1D(basename + "Dr", 50, 0, 1,
-                            "$\\Delta R / 0.4$", "$\\Delta R / 0.4$", "entries");
+                            "$\\Delta R$", "$\\Delta R$", "entries");
 
                 histos2D[basename + "DrDpt"] = bookHisto2D(basename + "DrDpt",
                         50, 0, 1, 50, -1, 1,
-                        "$\\Delta R/0.4$ vs $p_T$ resolution",
-                        "\\Delta R/0.4", "$p_T$ resolution", "entries");
+                        "$\\Delta R$ vs $p_T$ resolution",
+                        "\\Delta R", "$p_T$ resolution", "entries");
 
                 return;
             }

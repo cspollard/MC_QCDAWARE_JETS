@@ -2,7 +2,8 @@
 
 CMNDFILE=$1
 HEPMCFILE=`mktemp`.hepmc
-LOGFILE=${1/cmnd/log}
+PYTHIALOG=${1/cmnd/pythia.log}
+RIVETLOG=${1/cmnd/rivet.log}
 YODAFILE=${1/cmnd/yoda}
 
 NEVT=$2
@@ -10,9 +11,9 @@ NEVT=$2
 mkfifo $HEPMCFILE
 
 run-pythia -s -n $NEVT -e 13000 -i $CMNDFILE \
-    -o $HEPMCFILE > $LOGFILE 2>&1 &
+    -o $HEPMCFILE > $PYTHIALOG 2>&1 &
 
 rivet --pwd -a MC_QCDAWARE_JETS $HEPMCFILE \
-    -H $YODAFILE > $LOGFILE 2>&1
+    -H $YODAFILE > $RIVETLOG 2>&1
 
 rm $HEPMCFILE

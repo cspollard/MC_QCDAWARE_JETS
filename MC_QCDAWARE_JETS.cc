@@ -62,12 +62,16 @@ namespace Rivet {
                 bookLabelHistos("CharmAkt");
                 bookLabelHistos("BottomAkt");
                 bookLabelHistos("PhotonAkt");
+                bookLabelHistos("MuonAkt");
+                bookLabelHistos("ElectronAkt");
 
                 bookLabelHistos("GluonKt");
                 bookLabelHistos("LightKt");
                 bookLabelHistos("CharmKt");
                 bookLabelHistos("BottomKt");
                 bookLabelHistos("PhotonKt");
+                bookLabelHistos("MuonKt");
+                bookLabelHistos("ElectronKt");
 
                 // book unlabeled Pt histogram
                 histos1D["UnlabeledAktPt"] = bookHisto1D("UnlabeledAktPt",
@@ -182,7 +186,7 @@ namespace Rivet {
                     if (gaAktJets.size()) {
                         const Particle& labJet = gaAktJets[0];
 
-                        string name = pidToLabel(labJet.abspid()) + "Akt";
+                        string name = pidToLabel(labJet.pid()) + "Akt";
                         fillLabelHistos(name, weight, Jet(j).mom(), labJet.mom());
                     } else
                         histos1D["UnlabeledAktPt"]->fill(j.pt(), weight);
@@ -190,7 +194,7 @@ namespace Rivet {
                     if (gaKtJets.size()) {
                         const Particle& labJet = gaKtJets[0];
 
-                        string name = pidToLabel(labJet.abspid()) + "Kt";
+                        string name = pidToLabel(labJet.pid()) + "Kt";
                         fillLabelHistos(name, weight, Jet(j).mom(), labJet.mom());
                     } else
                         histos1D["UnlabeledKtPt"]->fill(j.pt(), weight);
@@ -280,8 +284,9 @@ namespace Rivet {
             }
 
 
-            string pidToLabel(int abspid) {
+            string pidToLabel(int pid) {
 
+                int abspid = abs(pid);
                 string name;
                 switch (abspid) {
                     case 22:
@@ -290,13 +295,21 @@ namespace Rivet {
                     case 21:
                         name = "Gluon";
                         break;
+                    case 13:
+                        name = "Muon";
+                        break;
+                    case 11:
+                        name = "Electron";
+                        break;
                     case 5:
                         name = "Bottom";
                         break;
                     case 4:
                         name = "Charm";
                         break;
-                    default:
+                    case 3:
+                    case 2:
+                    case 1:
                         name = "Light";
                         break;
                 }

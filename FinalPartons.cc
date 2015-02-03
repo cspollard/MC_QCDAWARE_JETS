@@ -7,12 +7,15 @@ namespace Rivet {
 
     bool FinalPartons::accept(const Particle& p) const {
 
-        if (!isParton(p) && !isPhoton(p))
+        // if *not* a parton, photon, electron, or muon: reject.
+        if (!(isParton(p) || isPhoton(p) ||
+                    isElectron(p) || isMuon(p)))
             return false;
 
-        // only getting gluons for some reason...
+        // reject if p has a parton, photon, electron, or muon child.
         foreach (const Particle& c, p.children())
-            if (isParton(c) || isPhoton(c))
+            if (isParton(c) || isPhoton(c) ||
+                    isElectron(c) || isMuon(c))
                 return false;
 
         return _cuts->accept(p);

@@ -10,7 +10,8 @@ Main:timesToShow = 20              ! show how far along run is this many times
 Main:timesAllowErrors = 10         ! abort run after this many flawed events
 Main:showChangedSettings = on      ! print changed flags/modes/parameters
 
-PhaseSpace:mHatMin=500
+PhaseSpace:pTHatMin=10
+PhaseSpace:bias2Selection=on
 
 PromptPhoton:qqbar2ggamma=on
 PromptPhoton:gg2ggamma=on

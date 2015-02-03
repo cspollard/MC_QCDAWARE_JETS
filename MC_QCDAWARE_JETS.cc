@@ -223,6 +223,7 @@ namespace Rivet {
             QCDAware *qcdawareca;
 
             std::map<string, Histo1DPtr> histos1D;
+            std::map<string, Profile1DPtr> profiles1D;
             std::map<string, Histo2DPtr> histos2D;
 
 
@@ -240,6 +241,18 @@ namespace Rivet {
                     bookHisto1D(basename + "Dr", 50, 0, 1,
                             "$\\Delta R$", "$\\Delta R$", "entries");
 
+                profiles1D[basename + "MeanDrVsPt"] =
+                    bookProfile1D(basename + "MeanDrVsPt", 50, 0, 100*GeV,
+                            "mean $\\Delta R$ vs $p_T$", "$p_T$ / GeV", "$\\Delta R$");
+
+                profiles1D[basename + "MeanDptVsDr"] =
+                    bookProfile1D(basename + "MeanDptVsDr", 50, 0, 1,
+                            "mean $p_T$ resolution vs $\\Delta R$", "$\\Delta R$", "$p_T$ resolution");
+
+                profiles1D[basename + "MeanDptVsPt"] =
+                    bookProfile1D(basename + "MeanDptVsPt", 50, 0, 100*GeV,
+                            "mean $p_T$ resolution vs $p_T$", "$p_T$ / GeV", "$p_T$ resolution");
+
                 histos2D[basename + "DrDpt"] = bookHisto2D(basename + "DrDpt",
                         50, 0, 1, 50, -1, 1,
                         "$\\Delta R$ vs $p_T$ resolution",
@@ -252,11 +265,17 @@ namespace Rivet {
             void fillLabelHistos(const string& basename, double weight,
                     const FourMomentum& jet, const FourMomentum& label) {
 
-                histos1D[basename + "Pt"]->fill(jet.pt(), weight);
-                histos1D[basename + "Dpt"]->fill(1 - label.pt()/jet.pt(), weight);
-                histos1D[basename + "Dr"]->fill(deltaR(jet, label), weight);
-                histos2D[basename + "DrDpt"]->fill(deltaR(jet, label),
-                        1 - label.pt()/jet.pt(), weight);
+                double pt = jet.pt();
+                double dpt = pt = 1 - label.pt()/pt;
+                double dr = deltaR(jet, label);
+
+                histos1D[basename + "Pt"]->fill(pt, weight);
+                histos1D[basename + "Dpt"]->fill(dpt, weight);
+                histos1D[basename + "Dr"]->fill(dr, weight);
+                profiles1D[basename + "MeanDrVsPt"]->fill(pt, dr, weight);
+                profiles1D[basename + "MeanDptVsDr"]->fill(dr, dpt, weight);
+                profiles1D[basename + "MeanDptVsPt"]->fill(pt, dpt, weight);
+                histos2D[basename + "DrDpt"]->fill(dr, dpt, weight);
 
             }
 

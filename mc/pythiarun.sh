@@ -1,9 +1,14 @@
 #!/usr/bin/bash
 
-mkfifo $1.hepmc
+CMNDFILE=$1
+HEPMCFILE=${1/cmnd/hepmc}
+LOGFILE=${1/cmnd/log}
+YODAFILE=${1/cmnd/yoda}
 
-run-pythia -s -i $1.cmnd -o $1.hepmc 2>&1 > $1.log
+mkfifo $HEPMC
 
-rivet --pwd -a MC_QCDAWARE_JETS $1.hepmc -H $1.yoda
+run-pythia -s -i $CMNDFILE -o $HEPMCFILE 2>&1 > $LOGFILE
 
-rm $1.hepmc
+rivet --pwd -a MC_QCDAWARE_JETS $HEPMCFILE -H $YODAFILE 2>&1 > $LOGFILE
+
+rm $HEPMCFILE

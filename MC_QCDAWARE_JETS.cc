@@ -213,6 +213,9 @@ namespace Rivet {
                 for (map< string, Histo1DPtr>::iterator p = histos1D.begin(); p != histos1D.end(); ++p)
                     p->second->scaleW(norm); // norm to cross section
 
+                for (map< string, Profile1DPtr>::iterator p = profiles1D.begin(); p != profiles1D.end(); ++p)
+                    p->second->scaleW(norm); // norm to cross section
+
                 for (map< string, Histo2DPtr>::iterator p = histos2D.begin(); p != histos2D.end(); ++p)
                     p->second->scaleW(norm); // norm to cross section
 
@@ -270,7 +273,7 @@ namespace Rivet {
                     const FourMomentum& jet, const FourMomentum& label) {
 
                 double pt = jet.pt();
-                double dpt = pt = 1 - label.pt()/pt;
+                double dpt = 1 - label.pt()/pt;
                 double dr = deltaR(jet, label);
 
                 histos1D[basename + "Pt"]->fill(pt, weight);

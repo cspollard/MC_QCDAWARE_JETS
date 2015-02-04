@@ -18,7 +18,12 @@ aodict = yoda.core.read(args[0], True)
 
 yfiledict = {}
 
-label = re.compile(r"UnlabeledKt|UnlabeledAkt|PhotonKt|PhotonAkt|GluonKt|GluonAkt|BottomKt|BottomAkt|CharmKt|CharmAkt|LightKt|LightAkt")
+partlabels = ["Unlabeled", "Photon", "Gluon", "Bottom", "Charm", "Light",
+        "Electron", "Muon"]
+jetalgs = ["Akt", "Kt"]
+
+labels = [a+b for (a, b) in itertools.product(partlabels, jetalgs)]
+label = re.compile("|".join(labels))
 
 for k, ao in aodict.iteritems():
     m = label.search(k)

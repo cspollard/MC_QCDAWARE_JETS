@@ -18,6 +18,10 @@ namespace Rivet {
                     isElectron(c) || isMuon(c))
                 return false;
 
+        // reject if from a hadron decay.
+        if (p.fromDecay() && !p.fromTau())
+            return false;
+
         return _cuts->accept(p);
     }
 

@@ -42,4 +42,4 @@ for k, ao in aodict.iteritems():
 
 # loop over rho, aos
 for lab, aos in yfiledict.iteritems():
-    yoda.write(aos, "%s.yoda" % lab)
+    yoda.write(aos, "%s_%s.yoda" % (args[0].replace(".yoda", ""), lab))

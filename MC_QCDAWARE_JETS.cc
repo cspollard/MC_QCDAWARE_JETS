@@ -21,7 +21,8 @@ namespace Rivet {
 
             /// Constructor
             MC_QCDAWARE_JETS()
-                : Analysis("MC_QCDAWARE_JETS")
+                : Analysis("MC_QCDAWARE_JETS"),
+                maxLabelDr(0.2)
             {    }
 
 
@@ -165,6 +166,8 @@ namespace Rivet {
                         if (s == "") continue;
 
                         const Particle& tmpPart = uip.particle();
+                        if (deltaR(FourMomentum(j), tmpPart) > maxLabelDr)
+                            continue;
 
                         if (s == "GhostAktPartonJet")
                             gaAktJets.push_back(tmpPart);
@@ -225,6 +228,8 @@ namespace Rivet {
 
 
         private:
+            double maxLabelDr;
+
             QCDAware *qcdawareakt;
             QCDAware *qcdawarekt;
             QCDAware *qcdawareca;

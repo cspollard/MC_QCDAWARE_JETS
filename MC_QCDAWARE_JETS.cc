@@ -43,18 +43,16 @@ namespace Rivet {
                 addProjection(FastJets(fps, FastJets::KT, 0.4), "Kt04FinalPartonJets");
                 addProjection(FastJets(fps, FastJets::CAM, 0.4), "CA04FinalPartonJets");
 
-                fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure> *aktdm =
-                    new fastjet::contrib::QCDAwareDistanceMeasure<AntiKtMeasure>(0.4);
-                fastjet::contrib::QCDAwareDistanceMeasure<KtMeasure> *ktdm =
-                    new fastjet::contrib::QCDAwareDistanceMeasure<KtMeasure>(0.4);
-                fastjet::contrib::QCDAwareDistanceMeasure<CAMeasure> *cadm =
-                    new fastjet::contrib::QCDAwareDistanceMeasure<CAMeasure>(0.4);
+                fastjet::contrib::AntiKtMeasure *aktdm =
+                    new fastjet::contrib::AntiKtMeasure(0.4);
+                fastjet::contrib::KtMeasure *ktdm =
+                    new fastjet::contrib::KtMeasure(0.4);
+                fastjet::contrib::CAMeasure *cadm =
+                    new fastjet::contrib::CAMeasure(0.4);
 
                 qcdawareakt = new fastjet::contrib::QCDAware(aktdm);
                 qcdawarekt = new fastjet::contrib::QCDAware(ktdm);
                 qcdawareca = new fastjet::contrib::QCDAware(cadm);
-
-
 
 
                 // book labeling histograms
@@ -166,7 +164,7 @@ namespace Rivet {
                         if (s == "") continue;
 
                         const Particle& tmpPart = uip.particle();
-                        if (deltaR(FourMomentum(j), tmpPart) > maxLabelDr)
+                        if (deltaR(momentum(j), tmpPart) > maxLabelDr)
                             continue;
 
                         if (s == "GhostAktPartonJet")

@@ -5,7 +5,9 @@
 #include "fastjet/ClusterSequence.hh"
 #include "fastjet/contrib/QCDAware.hh"
 
-#include "FinalPartons.hh"
+#include "Rivet/Projections/FinalPartons.hh"
+#include "Rivet/Projections/IdentifiedFinalState.hh"
+#include "Rivet/Projections/TauFinder.hh"
 
 #include "UserInfoParticle.hh"
 
@@ -33,11 +35,23 @@ namespace Rivet {
 
             void init() {
 
-                FinalPartons fps = FinalPartons();
+                FinalPartons fps;
                 addProjection(fps, "FinalPartons");
 
-                VisibleFinalState vfs = VisibleFinalState();
+                VisibleFinalState vfs = VisibleFinalState(-2.5, 2.5);
                 addProjection(vfs, "VisibleFinalState");
+
+                IdentifiedFinalState lepgammafs(vfs);
+                lepgammafs.acceptIdPair(11);
+                lepgammafs.acceptIdPair(13);
+                lepgammafs.acceptId(22);
+                addProjection(lepgammafs, "ElectronsMuonsPhotons");
+
+                TauFinder ltaufs(TauFinder::LEPTONIC);
+                addProjection(ltaufs, "LeptonicTaus");
+
+                TauFinder htaufs(TauFinder::HADRONIC);
+                addProjection(htaufs, "HadronicTaus");
 
                 addProjection(FastJets(fps, FastJets::ANTIKT, 0.4), "AntiKt04FinalPartonJets");
                 addProjection(FastJets(fps, FastJets::KT, 0.4), "Kt04FinalPartonJets");
@@ -54,23 +68,24 @@ namespace Rivet {
                 qcdawarekt = new fastjet::contrib::QCDAware(ktdm);
                 qcdawareca = new fastjet::contrib::QCDAware(cadm);
 
-
                 // book labeling histograms
                 bookLabelHistos("GluonAkt");
                 bookLabelHistos("LightAkt");
                 bookLabelHistos("CharmAkt");
                 bookLabelHistos("BottomAkt");
                 bookLabelHistos("PhotonAkt");
-                bookLabelHistos("MuonAkt");
                 bookLabelHistos("ElectronAkt");
+                bookLabelHistos("MuonAkt");
+                bookLabelHistos("TauAkt");
 
                 bookLabelHistos("GluonKt");
                 bookLabelHistos("LightKt");
                 bookLabelHistos("CharmKt");
                 bookLabelHistos("BottomKt");
                 bookLabelHistos("PhotonKt");
-                bookLabelHistos("MuonKt");
                 bookLabelHistos("ElectronKt");
+                bookLabelHistos("MuonKt");
+                bookLabelHistos("TauKt");
 
                 // book unlabeled Pt histogram
                 histos1D["UnlabeledAktPt"] = bookHisto1D("UnlabeledAktPt",
@@ -88,18 +103,87 @@ namespace Rivet {
                 const Particles& partons =
                     applyProjection<FinalPartons>(event, "FinalPartons").particles();
 
+                const Particles& lepsgammas = 
+                    applyProjection<IdentifiedFinalState>(event, "ElectronsMuonsPhotons").particles();
+
+                const Particles& leptaus =
+                    applyProjection<TauFinder>(event, "LeptonicTaus").particles();
+
+                const Particles& hadtaus =
+                    applyProjection<TauFinder>(event, "HadronicTaus").particles();
+
+
                 // first get the qcd-aware parton jets
                 vector<PseudoJet> pjs;
-                PseudoJet tmpPJ;
-                foreach (const Particle& parton, partons) {
-                    tmpPJ = parton.pseudojet();
+
+                // loop over partons
+                foreach (const Particle& part, partons) {
+                    if (part.fromDecay())
+                        continue;
+
+                    PseudoJet tmpPJ = part.pseudojet();
                     // user_info points to particle.
-                    tmpPJ.set_user_info(new UserInfoParticle(parton));
+                    tmpPJ.set_user_info(new UserInfoParticle(part));
 
                     // user_index used for flavor-aware clustering.
-                    tmpPJ.set_user_index(parton.pid());
+                    tmpPJ.set_user_index(part.pid());
 
                     pjs.push_back(tmpPJ);
+                }
+
+                // leptons and photons
+                foreach (const Particle& part, lepsgammas) {
+                    // reject leptons from taus too for now!!
+                    if (part.fromDecay())
+                        continue;
+
+                    PseudoJet tmpPJ = part.pseudojet();
+                    // user_info points to particle.
+                    tmpPJ.set_user_info(new UserInfoParticle(part));
+
+                    // user_index used for flavor-aware clustering.
+                    tmpPJ.set_user_index(part.pid());
+
+                    pjs.push_back(tmpPJ);
+                }
+
+                // hadronic taus
+                foreach (const Particle& part, hadtaus) {
+                    // taus can come from decays too...
+                    if (part.fromDecay())
+                        continue;
+
+                    PseudoJet tmpPJ = part.pseudojet();
+                    // user_info points to particle.
+                    tmpPJ.set_user_info(new UserInfoParticle(part));
+
+                    // user_index used for flavor-aware clustering.
+                    tmpPJ.set_user_index(part.pid());
+
+                    pjs.push_back(tmpPJ);
+                }
+
+                // leptonic taus
+                foreach (const Particle& tau, leptaus) {
+                    // taus can come from decays too...
+                    if (tau.fromDecay())
+                        continue;
+
+                    // all stable descendants of leptonic taus should
+                    // be included except neutrinos.
+                    foreach (const Particle& part, tau.stableDescendants()) {
+                        if (part.isNeutrino())
+                            continue;
+
+                        PseudoJet tmpPJ = part.pseudojet();
+                        // user_info points to particle.
+                        tmpPJ.set_user_info(new UserInfoParticle(part));
+
+                        // user_index used for flavor-aware clustering.
+                        tmpPJ.set_user_index(part.pid());
+
+                        pjs.push_back(tmpPJ);
+                    }
                 }
 
 
@@ -124,7 +208,7 @@ namespace Rivet {
                 // constituents for particle jets
                 pjs.clear();
                 foreach (const Particle& p, visibleParts) {
-                    tmpPJ = p.pseudojet();
+                    PseudoJet tmpPJ = p.pseudojet();
                     tmpPJ.set_user_info(new UserInfoParticle(p));
                     pjs.push_back(tmpPJ);
                 }

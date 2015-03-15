@@ -87,11 +87,63 @@ namespace Rivet {
                 bookLabelHistos("MuonKt");
                 bookLabelHistos("TauKt");
 
+                bookLabelHistos("GluonCA");
+                bookLabelHistos("LightCA");
+                bookLabelHistos("CharmCA");
+                bookLabelHistos("BottomCA");
+                bookLabelHistos("PhotonCA");
+                bookLabelHistos("ElectronCA");
+                bookLabelHistos("MuonCA");
+                bookLabelHistos("TauCA");
+
+                bookLabelHistos("GluonMaxPt");
+                bookLabelHistos("LightMaxPt");
+                bookLabelHistos("CharmMaxPt");
+                bookLabelHistos("BottomMaxPt");
+                bookLabelHistos("PhotonMaxPt");
+                bookLabelHistos("ElectronMaxPt");
+                bookLabelHistos("MuonMaxPt");
+                bookLabelHistos("TauMaxPt");
+
                 // book unlabeled Pt histogram
                 histos1D["UnlabeledAktPt"] = bookHisto1D("UnlabeledAktPt",
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
                 histos1D["UnlabeledKtPt"] = bookHisto1D("UnlabeledKtPt",
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
+                histos1D["UnlabeledCAPt"] = bookHisto1D("UnlabeledCAPt",
+                        50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
+                histos1D["UnlabeledMaxPtPt"] = bookHisto1D("UnlabeledMaxPtPt",
+                        50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
+
+                histos2D["AktLabVsKtLab"] = bookHisto2D("AktLabVsKtLab",
+                        51, -25.5, 25.5, 51, -25.5, 25.5,
+                        "anti-$k_t$ label vs $k_t$ label",
+                        "anti-$k_t$ label", "$k_t$ label", "entries");
+
+                histos2D["AktLabVsCALab"] = bookHisto2D("AktLabVsCALab",
+                        51, -25.5, 25.5, 51, -25.5, 25.5,
+                        "anti-$k_t$ label vs C/A label",
+                        "anti-$k_t$ label", "C/A label", "entries");
+
+                histos2D["KtLabVsCALab"] = bookHisto2D("KtLabVsCALab",
+                        51, -25.5, 25.5, 51, -25.5, 25.5,
+                        "$k_t$ label vs C/A label",
+                        "$k_t$ label", "C/A label", "entries");
+
+                histos2D["AktLabVsMaxPtLab"] = bookHisto2D("AktLabVsMaxPtLab",
+                        51, -25.5, 25.5, 51, -25.5, 25.5,
+                        "anti-$k_t$ label vs max-$p_T$ parton label",
+                        "anti-$k_t$ label", "max-$p_T$ parton label", "entries");
+
+                histos2D["KtLabVsMaxPtLab"] = bookHisto2D("KtLabVsMaxPtLab",
+                        51, -25.5, 25.5, 51, -25.5, 25.5,
+                        "$k_t$ label vs max-$p_T$ parton label",
+                        "$k_t$ label", "max-$p_T$ parton label", "entries");
+
+                histos2D["CALabVsMaxPtLab"] = bookHisto2D("CALabVsMaxPtLab",
+                        51, -25.5, 25.5, 51, -25.5, 25.5,
+                        "C/A label vs max-$p_T$ parton label",
+                        "C/A label", "max-$p_T$ parton label", "entries");
             }
 
 
@@ -114,21 +166,14 @@ namespace Rivet {
 
 
                 // first get the qcd-aware parton jets
-                vector<PseudoJet> pjs;
+                vector<Particle> partonJetInputs;
 
                 // loop over partons
                 foreach (const Particle& part, partons) {
                     if (part.fromDecay())
                         continue;
 
-                    PseudoJet tmpPJ = part.pseudojet();
-                    // user_info points to particle.
-                    tmpPJ.set_user_info(new UserInfoParticle(part));
-
-                    // user_index used for flavor-aware clustering.
-                    tmpPJ.set_user_index(part.pid());
-
-                    pjs.push_back(tmpPJ);
+                    partonJetInputs.push_back(part);
                 }
 
                 // leptons and photons
@@ -137,36 +182,32 @@ namespace Rivet {
                     if (part.fromDecay())
                         continue;
 
-                    PseudoJet tmpPJ = part.pseudojet();
-                    // user_info points to particle.
-                    tmpPJ.set_user_info(new UserInfoParticle(part));
-
-                    // user_index used for flavor-aware clustering.
-                    tmpPJ.set_user_index(part.pid());
-
-                    pjs.push_back(tmpPJ);
+                    partonJetInputs.push_back(part);
                 }
 
                 // hadronic taus
                 foreach (const Particle& part, hadtaus) {
-                    // taus can come from decays too...
+                    // TODO
+                    // does this reject taus from hadron decays?
                     if (part.fromDecay())
                         continue;
 
-                    PseudoJet tmpPJ = part.pseudojet();
-                    // user_info points to particle.
-                    tmpPJ.set_user_info(new UserInfoParticle(part));
+                    // only care about final taus
+                    if (part.genParticle()->status() != 2)
+                        continue;
 
-                    // user_index used for flavor-aware clustering.
-                    tmpPJ.set_user_index(part.pid());
-
-                    pjs.push_back(tmpPJ);
+                    partonJetInputs.push_back(part);
                 }
 
                 // leptonic taus
                 foreach (const Particle& tau, leptaus) {
-                    // taus can come from decays too...
+                    // TODO
+                    // does this reject taus from hadron decays?
                     if (tau.fromDecay())
+                        continue;
+
+                    // only care about final taus
+                    if (tau.genParticle()->status() != 2)
                         continue;
 
                     // all stable descendants of leptonic taus should
@@ -175,21 +216,27 @@ namespace Rivet {
                         if (part.isNeutrino())
                             continue;
 
-                        PseudoJet tmpPJ = part.pseudojet();
-                        // user_info points to particle.
-                        tmpPJ.set_user_info(new UserInfoParticle(part));
-
-                        // user_index used for flavor-aware clustering.
-                        tmpPJ.set_user_index(part.pid());
-
-                        pjs.push_back(tmpPJ);
+                        partonJetInputs.push_back(part);
                     }
                 }
 
 
-                ClusterSequence qcdawareaktcs(pjs, qcdawareakt);
-                ClusterSequence qcdawarektcs(pjs, qcdawarekt);
-                ClusterSequence qcdawarecacs(pjs, qcdawareca);
+                // make parton jet input pseudojets
+                vector<PseudoJet> partonPJs;
+                foreach (const Particle& part, partonJetInputs) {
+                    PseudoJet tmpPJ = part.pseudojet();
+                    // user_info points to particle.
+                    tmpPJ.set_user_info(new UserInfoParticle(part, "Parton"));
+
+                    // user_index used for flavor-aware clustering.
+                    tmpPJ.set_user_index(part.pid());
+
+                    partonPJs.push_back(tmpPJ);
+                }
+
+                ClusterSequence qcdawareaktcs(partonPJs, qcdawareakt);
+                ClusterSequence qcdawarektcs(partonPJs, qcdawarekt);
+                ClusterSequence qcdawarecacs(partonPJs, qcdawareca);
 
                 const vector<PseudoJet> aktPartonJets =
                     sorted_by_pt(qcdawareaktcs.inclusive_jets(5*GeV));
@@ -206,29 +253,33 @@ namespace Rivet {
                     applyProjection<VisibleFinalState>(event, "VisibleFinalState").particles();
 
                 // constituents for particle jets
-                pjs.clear();
+                vector<PseudoJet> particlePJs;
                 foreach (const Particle& p, visibleParts) {
                     PseudoJet tmpPJ = p.pseudojet();
-                    tmpPJ.set_user_info(new UserInfoParticle(p));
-                    pjs.push_back(tmpPJ);
+                    tmpPJ.set_user_info(new UserInfoParticle(p, "Particle"));
+                    particlePJs.push_back(tmpPJ);
                 }
 
                 // ghost association of parton jets to particle jets
                 foreach (const PseudoJet& aktPJ, aktPartonJets)
-                    pjs.push_back(ghost(Particle(aktPJ.user_index(), momentum(aktPJ)),
-                                "GhostAktPartonJet"));
+                    particlePJs.push_back(ghost(Particle(aktPJ.user_index(), momentum(aktPJ)),
+                                "AktPartonJet"));
 
                 foreach (const PseudoJet& ktPJ, ktPartonJets)
-                    pjs.push_back(ghost(Particle(ktPJ.user_index(), momentum(ktPJ)),
-                                "GhostKtPartonJet"));
+                    particlePJs.push_back(ghost(Particle(ktPJ.user_index(), momentum(ktPJ)),
+                                "KtPartonJet"));
 
                 foreach (const PseudoJet& caPJ, caPartonJets)
-                    pjs.push_back(ghost(Particle(caPJ.user_index(), momentum(caPJ)),
-                                "GhostCAPartonJet"));
+                    particlePJs.push_back(ghost(Particle(caPJ.user_index(), momentum(caPJ)),
+                                "CAPartonJet"));
 
-                ClusterSequence akt04cs(pjs, JetDefinition(antikt_algorithm, 0.4));
-                ClusterSequence kt04cs(pjs, JetDefinition(kt_algorithm, 0.4));
-                ClusterSequence ca04cs(pjs, JetDefinition(cambridge_algorithm, 0.4));
+                // ghost association of partons to particle jets
+                foreach (const Particle& part, partonJetInputs)
+                    particlePJs.push_back(ghost(part, "Parton"));
+
+                ClusterSequence akt04cs(particlePJs, JetDefinition(antikt_algorithm, 0.4));
+                ClusterSequence kt04cs(particlePJs, JetDefinition(kt_algorithm, 0.4));
+                ClusterSequence ca04cs(particlePJs, JetDefinition(cambridge_algorithm, 0.4));
 
                 const vector<PseudoJet> aktJets = sorted_by_pt(akt04cs.inclusive_jets(25*GeV));
                 const vector<PseudoJet> ktJets = sorted_by_pt(kt04cs.inclusive_jets(25*GeV));
@@ -236,54 +287,87 @@ namespace Rivet {
 
                 foreach (const PseudoJet& j, aktJets) {
 
-                    Particles gaAktJets;
-                    Particles gaKtJets;
-                    Particles gaCAJets;
-
-                    foreach (const PseudoJet& p, j.constituents()) {
-                        const UserInfoParticle& uip = p.user_info<UserInfoParticle>();
+                    FourMomentum jp4 = momentum(j);
+                    Particle aktLabel, ktLabel, caLabel, maxptLabel;
+                    foreach (const PseudoJet& pj, j.constituents()) {
+                        const UserInfoParticle& uip = pj.user_info<UserInfoParticle>();
                         const string& s = uip.str();
+                        const Particle& part = uip.particle();
 
-                        // not a ghost-associated pseudojet
-                        if (s == "") continue;
-
-                        const Particle& tmpPart = uip.particle();
-                        if (deltaR(momentum(j), tmpPart) > maxLabelDr)
+                        if (s == "Particle")
                             continue;
 
-                        if (s == "GhostAktPartonJet")
-                            gaAktJets.push_back(tmpPart);
+                        // store the highest-pt parton
+                        if (s == "Parton") {
+                            if (part.pT() > maxptLabel.pT())
+                                maxptLabel = part;
 
-                        else if (s == "GhostKtPartonJet")
-                            gaKtJets.push_back(tmpPart);
+                            continue;
+                        }
 
-                        else if (s == "GhostCAPartonJet")
-                            gaCAJets.push_back(tmpPart);
+                        // store best-matched parton label jet
+                        if (deltaR(jp4, part) > maxLabelDr)
+                            continue;
 
-                        else
-                            cout << "ERROR: unrecognized jet label!!!!!" << endl;
+                        if (s == "AktPartonJet" &&
+                                deltaR(jp4, part) < deltaR(jp4, aktLabel))
+                            aktLabel = part;
+
+                        else if (s == "KtPartonJet" &&
+                                deltaR(jp4, part) < deltaR(jp4, ktLabel))
+                            ktLabel = part;
+
+                        else if (s == "CAPartonJet" &&
+                                deltaR(jp4, part) < deltaR(jp4, caLabel))
+                            caLabel = part;
+
                     }
 
-                    gaAktJets = sortByPt(gaAktJets);
-                    gaKtJets = sortByPt(gaKtJets);
-                    gaCAJets = sortByPt(gaCAJets);
+                    int aktpid, ktpid, capid, maxptpid;
 
-                    if (gaAktJets.size()) {
-                        const Particle& labJet = gaAktJets[0];
+                    // we can assume 
+                    if (maxptLabel.pT()) {
+                        maxptpid = maxptLabel.pid();
+                        string name = pidToLabel(maxptpid) + "MaxPt";
+                        fillLabelHistos(name, weight, jp4, maxptLabel.mom());
+                    } else {
+                        maxptpid = 0;
+                        histos1D["UnlabeledMaxPtPt"]->fill(j.pt(), weight);
+                    }
 
-                        string name = pidToLabel(labJet.pid()) + "Akt";
-                        fillLabelHistos(name, weight, Jet(j).mom(), labJet.mom());
-                    } else
+                    if (aktLabel.pT()) {
+                        aktpid = aktLabel.pid();
+                        string name = pidToLabel(aktpid) + "Akt";
+                        fillLabelHistos(name, weight, jp4, aktLabel.mom());
+                    } else {
+                        aktpid = 0;
                         histos1D["UnlabeledAktPt"]->fill(j.pt(), weight);
+                    }
 
-                    if (gaKtJets.size()) {
-                        const Particle& labJet = gaKtJets[0];
-
-                        string name = pidToLabel(labJet.pid()) + "Kt";
-                        fillLabelHistos(name, weight, Jet(j).mom(), labJet.mom());
-                    } else
+                    if (ktLabel.pT()) {
+                        ktpid = ktLabel.pid();
+                        string name = pidToLabel(ktpid) + "Kt";
+                        fillLabelHistos(name, weight, jp4, ktLabel.mom());
+                    } else {
+                        ktpid = 0;
                         histos1D["UnlabeledKtPt"]->fill(j.pt(), weight);
+                    }
 
+                    if (caLabel.pT()) {
+                        capid = caLabel.pid();
+                        string name = pidToLabel(capid) + "CA";
+                        fillLabelHistos(name, weight, jp4, caLabel.mom());
+                    } else {
+                        capid = 0;
+                        histos1D["UnlabeledCAPt"]->fill(j.pt(), weight);
+                    }
+
+                    histos2D["AktLabVsKtLab"]->fill(aktpid, ktpid, weight);
+                    histos2D["AktLabVsCALab"]->fill(aktpid, capid, weight);
+                    histos2D["KtLabVsCALab"]->fill(ktpid, capid, weight);
+                    histos2D["AktLabVsMaxPtLab"]->fill(aktpid, maxptpid, weight);
+                    histos2D["KtLabVsMaxPtLab"]->fill(ktpid, maxptpid, weight);
+                    histos2D["CALabVsMaxPtLab"]->fill(capid, maxptpid, weight);
                 }
 
                 return;

@@ -159,10 +159,10 @@ namespace Rivet {
                     applyProjection<IdentifiedFinalState>(event, "ElectronsMuonsPhotons").particles();
 
                 const Particles& leptaus =
-                    applyProjection<TauFinder>(event, "LeptonicTaus").particles();
+                    applyProjection<TauFinder>(event, "LeptonicTaus").taus();
 
                 const Particles& hadtaus =
-                    applyProjection<TauFinder>(event, "HadronicTaus").particles();
+                    applyProjection<TauFinder>(event, "HadronicTaus").taus();
 
 
                 // first get the qcd-aware parton jets
@@ -186,17 +186,25 @@ namespace Rivet {
                 }
 
                 // hadronic taus
-                foreach (const Particle& part, hadtaus) {
+                foreach (const Particle& tau, hadtaus) {
                     // TODO
                     // does this reject taus from hadron decays?
-                    if (part.fromDecay())
+                    if (tau.fromDecay())
                         continue;
 
                     // only care about final taus
-                    if (part.genParticle()->status() != 2)
+                    if (tau.genParticle()->status() != 2)
                         continue;
 
-                    partonJetInputs.push_back(part);
+                    // TODO
+                    // this shouldn't be necessary...
+                    foreach (const Particle& p, tau.stableDescendants()) {
+
+                        if (p.isHadron()) {
+                            partonJetInputs.push_back(tau);
+                            break;
+                        }
+                    }
                 }
 
                 // leptonic taus
@@ -208,6 +216,19 @@ namespace Rivet {
 
                     // only care about final taus
                     if (tau.genParticle()->status() != 2)
+                        continue;
+
+                    // TODO
+                    // this shouldn't be necessary.
+                    bool haddecay = false;
+                    foreach (const Particle& p, tau.stableDescendants()) {
+                        if (p.isHadron()) {
+                            haddecay = true;
+                            break;
+                        }
+                    }
+
+                    if (haddecay)
                         continue;
 
                     // all stable descendants of leptonic taus should
@@ -461,34 +482,36 @@ namespace Rivet {
             string pidToLabel(int pid) {
 
                 int abspid = abs(pid);
-                string name;
                 switch (abspid) {
                     case 22:
-                        name = "Photon";
+                        return "Photon";
                         break;
                     case 21:
-                        name = "Gluon";
+                        return "Gluon";
+                        break;
+                    case 15:
+                        return "Tau";
                         break;
                     case 13:
-                        name = "Muon";
+                        return "Muon";
                         break;
                     case 11:
-                        name = "Electron";
+                        return "Electron";
                         break;
                     case 5:
-                        name = "Bottom";
+                        return "Bottom";
                         break;
                     case 4:
-                        name = "Charm";
+                        return "Charm";
                         break;
                     case 3:
                     case 2:
                     case 1:
-                        name = "Light";
+                        return "Light";
                         break;
                 }
 
-                return name;
+                return "";
             }
 
 

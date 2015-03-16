@@ -20,7 +20,7 @@ yfiledict = {}
 
 partlabels = ["Unlabeled", "Photon", "Gluon", "Bottom", "Charm", "Light",
         "Electron", "Muon", "Tau"]
-jetalgs = ["MaxPt", "ReclusterKt", "Akt", "Kt"]
+jetalgs = ["MaxPt", "Reclustered", "Akt", "Kt"]
 
 labels = [a+b for (a, b) in itertools.product(partlabels, jetalgs)]
 label = re.compile("|".join(labels))

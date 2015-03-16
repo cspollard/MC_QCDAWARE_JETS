@@ -47,11 +47,8 @@ namespace Rivet {
                 lepgammafs.acceptId(22);
                 addProjection(lepgammafs, "ElectronsMuonsPhotons");
 
-                TauFinder ltaufs(TauFinder::LEPTONIC);
-                addProjection(ltaufs, "LeptonicTaus");
-
-                TauFinder htaufs(TauFinder::HADRONIC);
-                addProjection(htaufs, "HadronicTaus");
+                TauFinder taufs;
+                addProjection(taufs, "Taus");
 
                 addProjection(FastJets(fps, FastJets::ANTIKT, 0.4), "AntiKt04FinalPartonJets");
                 addProjection(FastJets(fps, FastJets::KT, 0.4), "Kt04FinalPartonJets");
@@ -96,14 +93,14 @@ namespace Rivet {
                 bookLabelHistos("MuonCA");
                 bookLabelHistos("TauCA");
 
-                bookLabelHistos("GluonReclusterKt");
-                bookLabelHistos("LightReclusterKt");
-                bookLabelHistos("CharmReclusterKt");
-                bookLabelHistos("BottomReclusterKt");
-                bookLabelHistos("PhotonReclusterKt");
-                bookLabelHistos("ElectronReclusterKt");
-                bookLabelHistos("MuonReclusterKt");
-                bookLabelHistos("TauReclusterKt");
+                bookLabelHistos("GluonReclustered");
+                bookLabelHistos("LightReclustered");
+                bookLabelHistos("CharmReclustered");
+                bookLabelHistos("BottomReclustered");
+                bookLabelHistos("PhotonReclustered");
+                bookLabelHistos("ElectronReclustered");
+                bookLabelHistos("MuonReclustered");
+                bookLabelHistos("TauReclustered");
 
                 bookLabelHistos("GluonMaxPt");
                 bookLabelHistos("LightMaxPt");
@@ -123,7 +120,7 @@ namespace Rivet {
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
                 histos1D["UnlabeledMaxPtPt"] = bookHisto1D("UnlabeledMaxPtPt",
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
-                histos1D["UnlabeledReclusterKtPt"] = bookHisto1D("UnlabeledReclusterKtPt",
+                histos1D["UnlabeledReclusteredPt"] = bookHisto1D("UnlabeledReclusteredPt",
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
 
                 histos2D["AktLabVsKtLab"] = bookHisto2D("AktLabVsKtLab",
@@ -143,38 +140,38 @@ namespace Rivet {
 
                 histos2D["AktLabVsMaxPtLab"] = bookHisto2D("AktLabVsMaxPtLab",
                         51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "anti-$k_t$ label vs max-$p_T$ parton label",
-                        "anti-$k_t$ label", "max-$p_T$ parton label", "entries");
+                        "anti-$k_t$ label vs max-$p_T$ label",
+                        "anti-$k_t$ label", "max-$p_T$ label", "entries");
 
                 histos2D["KtLabVsMaxPtLab"] = bookHisto2D("KtLabVsMaxPtLab",
                         51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "$k_t$ label vs max-$p_T$ parton label",
-                        "$k_t$ label", "max-$p_T$ parton label", "entries");
+                        "$k_t$ label vs max-$p_T$ label",
+                        "$k_t$ label", "max-$p_T$ label", "entries");
 
                 histos2D["CALabVsMaxPtLab"] = bookHisto2D("CALabVsMaxPtLab",
                         51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "C/A label vs max-$p_T$ parton label",
-                        "C/A label", "max-$p_T$ parton label", "entries");
+                        "C/A label vs max-$p_T$ label",
+                        "C/A label", "max-$p_T$ label", "entries");
 
-                histos2D["AktLabVsReclusterKtLab"] = bookHisto2D("AktLabVsReclusterKtLab",
+                histos2D["AktLabVsReclusteredLab"] = bookHisto2D("AktLabVsReclusteredLab",
                         51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "anti-$k_t$ label vs reclustered $k_t$ parton label",
-                        "anti-$k_t$ label", "reclustered $k_t$ parton label", "entries");
+                        "anti-$k_t$ label vs reclustered $k_t$ label",
+                        "anti-$k_t$ label", "reclustered $k_t$ label", "entries");
 
-                histos2D["KtLabVsReclusterKtLab"] = bookHisto2D("KtLabVsReclusterKtLab",
+                histos2D["KtLabVsReclusteredLab"] = bookHisto2D("KtLabVsReclusteredLab",
                         51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "$k_t$ label vs reclustered $k_t$ parton label",
-                        "$k_t$ label", "reclustered $k_t$ parton label", "entries");
+                        "$k_t$ label vs reclustered $k_t$ label",
+                        "$k_t$ label", "reclustered $k_t$ label", "entries");
 
-                histos2D["CALabVsReclusterKtLab"] = bookHisto2D("CALabVsReclusterKtLab",
+                histos2D["CALabVsReclusteredLab"] = bookHisto2D("CALabVsReclusteredLab",
                         51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "C/A label vs reclustered $k_t$ parton label",
-                        "C/A label", "reclustered $k_t$ parton label", "entries");
+                        "C/A label vs reclustered $k_t$ label",
+                        "C/A label", "reclustered $k_t$ label", "entries");
 
-                histos2D["MaxPtLabVsReclusterKtLab"] = bookHisto2D("MaxPtLabVsReclusterKtLab",
+                histos2D["MaxPtLabVsReclusteredLab"] = bookHisto2D("MaxPtLabVsReclusteredLab",
                         51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "max-$p_T$ parton label vs reclustered $k_t$ parton label",
-                        "max-$p_T$ parton label", "reclustered $k_t$ parton label", "entries");
+                        "max-$p_T$ label vs reclustered $k_t$ parton label",
+                        "max-$p_T$ label", "reclustered $k_t$ label", "entries");
             }
 
 
@@ -189,12 +186,8 @@ namespace Rivet {
                 const Particles& lepsgammas = 
                     applyProjection<IdentifiedFinalState>(event, "ElectronsMuonsPhotons").particles();
 
-                const Particles& leptaus =
-                    applyProjection<TauFinder>(event, "LeptonicTaus").taus();
-
-                const Particles& hadtaus =
-                    applyProjection<TauFinder>(event, "HadronicTaus").taus();
-
+                const Particles& taus =
+                    applyProjection<TauFinder>(event, "Taus").taus();
 
                 // first get the qcd-aware parton jets
                 vector<Particle> partonJetInputs;
@@ -217,14 +210,9 @@ namespace Rivet {
                 }
 
                 // hadronic taus
-                foreach (const Particle& tau, hadtaus) {
-                    // TODO
-                    // does this reject taus from hadron decays?
+                foreach (const Particle& tau, taus) {
+                    // reject taus from hadron decays and tau chains
                     if (tau.fromDecay())
-                        continue;
-
-                    // only care about final taus
-                    if (tau.genParticle()->status() != 2)
                         continue;
 
                     // TODO
@@ -236,32 +224,8 @@ namespace Rivet {
                             break;
                         }
                     }
-                }
 
-                // leptonic taus
-                foreach (const Particle& tau, leptaus) {
-                    // TODO
-                    // does this reject taus from hadron decays?
-                    if (tau.fromDecay())
-                        continue;
-
-                    // only care about final taus
-                    if (tau.genParticle()->status() != 2)
-                        continue;
-
-                    // TODO
-                    // this shouldn't be necessary.
-                    bool haddecay = false;
-                    foreach (const Particle& p, tau.stableDescendants()) {
-                        if (p.isHadron()) {
-                            haddecay = true;
-                            break;
-                        }
-                    }
-
-                    if (haddecay)
-                        continue;
-
+                    // this isn't a hadronic tau.
                     // all stable descendants of leptonic taus should
                     // be included except neutrinos.
                     foreach (const Particle& part, tau.stableDescendants()) {
@@ -328,9 +292,19 @@ namespace Rivet {
                             ghost(Particle(caPJ.user_index(), momentum(caPJ)),
                                 "GACAPartonJet"));
 
-                // ghost association of partons to particle jets
+                // ghost association of final partons to particle jets
                 foreach (const Particle& part, partonJetInputs)
+                    particlePJs.push_back(ghost(part, "GAFinalParton"));
+
+                // ghost association of ALL partons to particle jets
+                // for max-pt labeling
+                foreach (const GenParticle* gp, Rivet::particles(event.genEvent())) {
+                    const Particle part(gp);
+                    if (!isParton(part))
+                        continue;
+
                     particlePJs.push_back(ghost(part, "GAParton"));
+                }
 
                 ClusterSequence akt04cs(particlePJs, JetDefinition(antikt_algorithm, 0.4));
                 ClusterSequence kt04cs(particlePJs, JetDefinition(kt_algorithm, 0.4));
@@ -348,7 +322,7 @@ namespace Rivet {
                     Particle aktLabel, ktLabel, caLabel, maxptLabel;
 
                     // for cluster relabling
-                    vector<PseudoJet> partonReclusterKtInputs;
+                    vector<PseudoJet> partonReclusteredInputs;
                     foreach (const PseudoJet& pj, j.constituents()) {
                         const UserInfoParticle& uip = pj.user_info<UserInfoParticle>();
                         const string& s = uip.str();
@@ -358,21 +332,24 @@ namespace Rivet {
                             continue;
 
                         // ghost associated partons
-                        if (s == "GAParton") {
+                        if (s == "GAFinalParton") {
 
                             // save pseudojet for reclustering
                             PseudoJet partPJ = part.pseudojet();
                             partPJ.set_user_index(part.pid());
                             partPJ.set_user_info(new UserInfoParticle(part, "Parton"));
-                            partonReclusterKtInputs.push_back(partPJ);
+                            partonReclusteredInputs.push_back(partPJ);
 
+                            continue;
+                        }
+
+                        if (s == "GAParton") {
                             // note the highest-pt parton
                             if (part.pT() > maxptLabel.pT())
                                 maxptLabel = part;
 
                             continue;
                         }
-
 
                         // store best-matched parton label jet
                         if (deltaR(jp4, part) > maxLabelDr)
@@ -396,7 +373,7 @@ namespace Rivet {
                     }
 
                     // recluster ghost-matched partons
-                    ClusterSequence qcdawarereclusterktcs(partonReclusterKtInputs, qcdawarekt);
+                    ClusterSequence qcdawarereclusterktcs(partonReclusteredInputs, qcdawarekt);
                     const vector<PseudoJet> reclusterKtPartonJets =
                         sorted_by_pt(qcdawarereclusterktcs.inclusive_jets(5*GeV));
 
@@ -420,11 +397,11 @@ namespace Rivet {
 
                     if (reclusterKtLabel.pT()) {
                         reclusterktpid = reclusterKtLabel.pid();
-                        string name = pidToLabel(reclusterktpid) + "ReclusterKt";
+                        string name = pidToLabel(reclusterktpid) + "Reclustered";
                         fillLabelHistos(name, weight, jp4, reclusterKtLabel.mom());
                     } else {
                         reclusterktpid = 0;
-                        histos1D["UnlabeledReclusterKtPt"]->fill(j.pt(), weight);
+                        histos1D["UnlabeledReclusteredPt"]->fill(j.pt(), weight);
                     }
 
                     if (aktLabel.pT()) {
@@ -460,10 +437,10 @@ namespace Rivet {
                     histos2D["AktLabVsMaxPtLab"]->fill(aktpid, maxptpid, weight);
                     histos2D["KtLabVsMaxPtLab"]->fill(ktpid, maxptpid, weight);
                     histos2D["CALabVsMaxPtLab"]->fill(capid, maxptpid, weight);
-                    histos2D["AktLabVsReclusterKtLab"]->fill(aktpid, reclusterktpid, weight);
-                    histos2D["KtLabVsReclusterKtLab"]->fill(ktpid, reclusterktpid, weight);
-                    histos2D["CALabVsReclusterKtLab"]->fill(capid, reclusterktpid, weight);
-                    histos2D["MaxPtLabVsReclusterKtLab"]->fill(maxptpid, reclusterktpid, weight);
+                    histos2D["AktLabVsReclusteredLab"]->fill(aktpid, reclusterktpid, weight);
+                    histos2D["KtLabVsReclusteredLab"]->fill(ktpid, reclusterktpid, weight);
+                    histos2D["CALabVsReclusteredLab"]->fill(capid, reclusterktpid, weight);
+                    histos2D["MaxPtLabVsReclusteredLab"]->fill(maxptpid, reclusterktpid, weight);
                 }
 
                 return;

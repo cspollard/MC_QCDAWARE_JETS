@@ -299,8 +299,10 @@ namespace Rivet {
                 // ghost association of ALL partons to particle jets
                 // for max-pt labeling
                 foreach (const GenParticle* gp, Rivet::particles(event.genEvent())) {
-                    const Particle part(gp);
-                    if (!isParton(part))
+                    Particle part(gp->pdg_id(), gp->momentum());
+
+                    // cut out non-partons and high-eta (including incoming) partons
+                    if (!isParton(part) || part.Eta() > 7.0)
                         continue;
 
                     particlePJs.push_back(ghost(part, "GAParton"));
@@ -314,12 +316,14 @@ namespace Rivet {
                 const vector<PseudoJet> ktJets = sorted_by_pt(kt04cs.inclusive_jets(25*GeV));
                 const vector<PseudoJet> caJets = sorted_by_pt(ca04cs.inclusive_jets(25*GeV));
 
+                cout << "here2" << endl;
                 foreach (const PseudoJet& j, aktJets) {
 
                     FourMomentum jp4 = momentum(j);
 
                     // particle labels
                     Particle aktLabel, ktLabel, caLabel, maxptLabel;
+                    cout << "here3" << endl;
 
                     // for cluster relabling
                     vector<PseudoJet> partonReclusteredInputs;
@@ -330,6 +334,8 @@ namespace Rivet {
 
                         if (s == "Particle")
                             continue;
+
+                        cout << "here4" << endl;
 
                         // ghost associated partons
                         if (s == "GAFinalParton") {
@@ -343,6 +349,8 @@ namespace Rivet {
                             continue;
                         }
 
+                        cout << "here5" << endl;
+
                         if (s == "GAParton") {
                             // note the highest-pt parton
                             if (part.pT() > maxptLabel.pT())
@@ -350,6 +358,7 @@ namespace Rivet {
 
                             continue;
                         }
+                        cout << "here2" << endl;
 
                         // store best-matched parton label jet
                         if (deltaR(jp4, part) > maxLabelDr)

@@ -47,7 +47,7 @@ namespace Rivet {
                 lepgammafs.acceptId(22);
                 addProjection(lepgammafs, "ElectronsMuonsPhotons");
 
-                TauFinder taufs;
+                TauFinder taufs(TauFinder::ANY);
                 addProjection(taufs, "Taus");
 
                 addProjection(FastJets(fps, FastJets::ANTIKT, 0.4), "AntiKt04FinalPartonJets");
@@ -180,7 +180,7 @@ namespace Rivet {
                 const double weight = event.weight();
 
                 // first get all final partons
-                const Particles& partons =
+                const Particles& finalPartons =
                     applyProjection<FinalPartons>(event, "FinalPartons").particles();
 
                 const Particles& lepsgammas = 
@@ -192,9 +192,9 @@ namespace Rivet {
                 // first get the qcd-aware parton jets
                 vector<Particle> partonJetInputs;
 
-                // loop over partons
-                foreach (const Particle& part, partons) {
-                    if (part.fromDecay())
+                // loop over final partons
+                foreach (const Particle& part, finalPartons) {
+                    if (part.abseta() > 7.0)
                         continue;
 
                     partonJetInputs.push_back(part);
@@ -202,8 +202,11 @@ namespace Rivet {
 
                 // leptons and photons
                 foreach (const Particle& part, lepsgammas) {
-                    // reject leptons from taus too for now!!
+                    // deal with tau decay products later.
                     if (part.fromDecay())
+                        continue;
+
+                    if (part.abseta() > 7.0)
                         continue;
 
                     partonJetInputs.push_back(part);
@@ -215,9 +218,13 @@ namespace Rivet {
                     if (tau.fromDecay())
                         continue;
 
+
                     // TODO
                     // this shouldn't be necessary...
                     foreach (const Particle& p, tau.stableDescendants()) {
+
+                        if (tau.abseta() > 7.0)
+                            continue;
 
                         if (p.isHadron()) {
                             partonJetInputs.push_back(tau);
@@ -230,6 +237,9 @@ namespace Rivet {
                     // be included except neutrinos.
                     foreach (const Particle& part, tau.stableDescendants()) {
                         if (part.isNeutrino())
+                            continue;
+
+                        if (part.abseta() > 7.0)
                             continue;
 
                         partonJetInputs.push_back(part);
@@ -280,32 +290,32 @@ namespace Rivet {
                 foreach (const PseudoJet& aktPJ, aktPartonJets)
                     particlePJs.push_back(
                             ghost(Particle(aktPJ.user_index(), momentum(aktPJ)),
-                                "GAAktPartonJet"));
+                                "GAAktPartonJet", aktPJ.user_index()));
 
                 foreach (const PseudoJet& ktPJ, ktPartonJets)
                     particlePJs.push_back(
                             ghost(Particle(ktPJ.user_index(), momentum(ktPJ)),
-                                "GAKtPartonJet"));
+                                "GAKtPartonJet", ktPJ.user_index()));
 
                 foreach (const PseudoJet& caPJ, caPartonJets)
                     particlePJs.push_back(
                             ghost(Particle(caPJ.user_index(), momentum(caPJ)),
-                                "GACAPartonJet"));
+                                "GACAPartonJet", caPJ.user_index()));
 
                 // ghost association of final partons to particle jets
                 foreach (const Particle& part, partonJetInputs)
-                    particlePJs.push_back(ghost(part, "GAFinalParton"));
+                    particlePJs.push_back(ghost(part, "GAFinalParton", part.pid()));
 
                 // ghost association of ALL partons to particle jets
                 // for max-pt labeling
                 foreach (const GenParticle* gp, Rivet::particles(event.genEvent())) {
-                    Particle part(gp->pdg_id(), gp->momentum());
+                    Particle part(gp);
 
                     // cut out non-partons and high-eta (including incoming) partons
                     if (!isParton(part) || part.abseta() > 7.0)
                         continue;
 
-                    particlePJs.push_back(ghost(part, "GAParton"));
+                    particlePJs.push_back(ghost(part, "GAParton", part.pid()));
                 }
 
                 ClusterSequence akt04cs(particlePJs, JetDefinition(antikt_algorithm, 0.4));

@@ -27,9 +27,9 @@ class UserInfoParticle : public fastjet::PseudoJet::UserInfoBase {
 };
 
 
-fastjet::PseudoJet ghost(const Rivet::Particle& p, const std::string& s="", const int idx=-1) {
+fastjet::PseudoJet ghost(const Rivet::Particle &p, const std::string& s="", const int idx=-1) {
     fastjet::PseudoJet pj;
-    pj.reset_PtYPhiM(p.pt()*1e-10, p.rap(), p.phi(), p.mass()*1e-10);
+    pj.reset_momentum(p.px()*1e-10, p.py()*1e-10, p.pz()*1e-10, p.E()*1e-10);
     pj.set_user_info(new UserInfoParticle(p, s));
     pj.set_user_index(idx);
 

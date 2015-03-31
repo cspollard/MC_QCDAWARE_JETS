@@ -21,8 +21,10 @@ yfiledict = {}
 partlabels = ["Unlabeled", "Photon", "Gluon", "Bottom", "Charm", "Light",
         "Electron", "Muon", "Tau"]
 jetalgs = ["MaxPt", "Reclustered", "Akt", "Kt"]
+jettypes = ["Inclusive", "Jet0", "Jet1", "Jet2", "Jet3"]
 
-labels = [a+b for (a, b) in itertools.product(partlabels, jetalgs)]
+labels = ["%s_%s_%s_" % x for x in itertools.product(jettypes,
+    partlabels, jetalgs)]
 label = re.compile("|".join(labels))
 
 for k, ao in aodict.iteritems():
@@ -42,4 +44,5 @@ for k, ao in aodict.iteritems():
 
 # loop over rho, aos
 for lab, aos in yfiledict.iteritems():
-    yoda.write(aos, "%s_%s.yoda" % (args[0].replace(".yoda", ""), lab))
+    yoda.write(aos, "%s_%s.yoda" % (args[0].replace(".yoda", ""),
+        lab.strip('_')))

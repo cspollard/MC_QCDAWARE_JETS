@@ -23,18 +23,10 @@ namespace Rivet {
     class LabeledJet {
         private:
             map<string, Particle> _labelMap;
-            Jet _jet;
+            const PseudoJet& _pjet;
 
         public:
-            LabeledJet(const Jet& jet) {
-                _jet = jet;
-                return;
-            }
-
-            LabeledJet(const PseudoJet& pj) {
-                _jet = Jet(pj);
-                return;
-            }
+            LabeledJet(const PseudoJet& pj) : _pjet(pj) { }
 
             Particle& operator[] (const string& lab) {
                 map<string, Particle>::const_iterator p = _labelMap.find(lab);
@@ -47,8 +39,8 @@ namespace Rivet {
                 return _labelMap[lab];
             }
 
-            const Jet jet() {
-                return _jet;
+            const PseudoJet pseudojet() {
+                return _pjet;
             }
     };
 
@@ -290,23 +282,23 @@ namespace Rivet {
 
                 unsigned int iJet = 0;
                 foreach (const PseudoJet& j, aktJets) {
-                    LabeledJet jet(j);
-                    fillJetLabels(jet);
+                    LabeledJet labjet(j);
+                    fillJetLabels(labjet);
 
-                    fillLabelHistos("Inclusive", jet, weight);
+                    fillLabelHistos("Inclusive", labjet, weight);
 
                     switch (iJet) {
                         case 0:
-                            fillLabelHistos("Jet0", jet, weight);
+                            fillLabelHistos("Jet0", labjet, weight);
                             break;
                         case 1:
-                            fillLabelHistos("Jet1", jet, weight);
+                            fillLabelHistos("Jet1", labjet, weight);
                             break;
                         case 2:
-                            fillLabelHistos("Jet2", jet, weight);
+                            fillLabelHistos("Jet2", labjet, weight);
                             break;
                         case 3:
-                            fillLabelHistos("Jet3", jet, weight);
+                            fillLabelHistos("Jet3", labjet, weight);
                             break;
                     }
 
@@ -378,12 +370,11 @@ namespace Rivet {
 
                 MSG_DEBUG(string("filling label histograms: ") + prefix);
 
-                double pt = labjet.jet().pt();
-                cout << "pt: " << pt << endl;
+                double pt = labjet.pseudojet().pt();
                 foreach (const string& lab, labels) {
                     const Particle& labelpart = labjet[lab];
                     double dpt = 1 - labelpart.pt()/pt;
-                    double dr = deltaR(labjet.jet(), labelpart);
+                    double dr = deltaR(momentum(labjet.pseudojet()), labelpart);
 
                     const string basename = prefix + "_" +
                         pidToLabel(labelpart.pid()) + "_" +
@@ -422,12 +413,12 @@ namespace Rivet {
             void fillJetLabels(LabeledJet& labjet) {
                 MSG_DEBUG("fillng jet labels.");
 
-                FourMomentum jp4 = momentum(labjet.jet());
+                FourMomentum jp4 = momentum(labjet.pseudojet());
 
                 // for recluster labling
                 vector<PseudoJet> partonReclusteredInputs;
 
-                foreach (const PseudoJet& pj, labjet.jet().constituents()) {
+                foreach (const PseudoJet& pj, labjet.pseudojet().constituents()) {
                     const UserInfoParticle& uip = pj.user_info<UserInfoParticle>();
                     const string& s = uip.str();
                     const Particle& part = uip.particle();
@@ -451,8 +442,10 @@ namespace Rivet {
 
                     if (s == "GAParton") {
                         // note the highest-pt parton
-                        if (part.pT() > labjet["MaxPt"].pT())
+                        if (part.pT() > labjet["MaxPt"].pT()) {
                             labjet["MaxPt"] = part;
+                            MSG_DEBUG("giving jet MaxPt label.");
+                        }
 
                         continue;
                     }
@@ -463,13 +456,17 @@ namespace Rivet {
 
                     if (s == "GAAktPartonJet" &&
                             (!labjet["Akt"].pt() ||
-                             deltaR(jp4, part) < deltaR(jp4, labjet["Akt"])))
+                             deltaR(jp4, part) < deltaR(jp4, labjet["Akt"]))) {
+                        MSG_DEBUG("giving jet Akt label.");
                         labjet["Akt"] = part;
+                    }
 
                     else if (s == "GAKtPartonJet" &&
                             (!labjet["Kt"].pt() ||
-                             deltaR(jp4, part) < deltaR(jp4, labjet["Kt"])))
+                             deltaR(jp4, part) < deltaR(jp4, labjet["Kt"]))) {
+                        MSG_DEBUG("giving jet Kt label.");
                         labjet["Kt"] = part;
+                    }
                 }
 
                 // recluster ghost-matched partons

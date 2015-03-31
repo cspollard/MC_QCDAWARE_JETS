@@ -9,6 +9,7 @@
 #include "Rivet/Projections/IdentifiedFinalState.hh"
 #include "Rivet/Projections/VisibleFinalState.hh"
 #include "Rivet/Projections/TauFinder.hh"
+#include "Rivet/Tools/Logging.hh"
 
 #include "UserInfoParticle.hh"
 
@@ -19,18 +20,19 @@ using namespace fastjet::contrib;
 
 namespace Rivet {
 
-    class LabeledJet : public Jet {
+    class LabeledJet {
         private:
-            map<string, Particle> labelMap;
+            map<string, Particle> _labelMap;
+            Jet _jet;
 
         public:
             LabeledJet(const Jet& jet) {
-                Jet(jet.mom(), jet.particles(), jet.tags());
+                _jet = jet;
                 return;
             }
 
             LabeledJet(const PseudoJet& pj) {
-                Jet(pj, Particles());
+                _jet = Jet(pj);
                 return;
             }
 
@@ -44,16 +46,20 @@ namespace Rivet {
 
                 return labelMap[lab];
             }
+
+            const Jet jet() {
+                return _jet;
+            }
     };
 
 
     class MC_QCDAWARE_JETS : public Analysis {
 
         private:
-            vector<const string> flavors;
-            vector<const string> labels;
-            vector<const string> labelsTex;
-            vector<const string> leadlabs;
+            vector<string> flavors;
+            vector<string> labels;
+            vector<string> labelsTex;
+            vector<string> leadlabs;
 
             double maxLabelDr;
 
@@ -71,7 +77,8 @@ namespace Rivet {
             // this is really, really ugly.
             MC_QCDAWARE_JETS()
                 : Analysis("MC_QCDAWARE_JETS"),
-                maxLabelDr(0.2) {    
+                maxLabelDr(0.2) {
+
                     flavors.push_back("Unlabeled");
                     flavors.push_back("Gluon");
                     flavors.push_back("Light");
@@ -82,12 +89,6 @@ namespace Rivet {
                     flavors.push_back("Muon");
                     flavors.push_back("Tau");
 
-                    leadlabs.push_back("Inclusive");
-                    leadlabs.push_back("Jet0");
-                    leadlabs.push_back("Jet1");
-                    leadlabs.push_back("Jet2");
-                    leadlabs.push_back("Jet3");
-
                     labels.push_back("Akt");
                     labels.push_back("Kt");
                     labels.push_back("MaxPt");
@@ -97,6 +98,12 @@ namespace Rivet {
                     labelsTex.push_back("$k_t$ label");
                     labelsTex.push_back("max-$p_T$ label");
                     labelsTex.push_back("reclustered $k_t$ label");
+
+                    leadlabs.push_back("Inclusive");
+                    leadlabs.push_back("Jet0");
+                    leadlabs.push_back("Jet1");
+                    leadlabs.push_back("Jet2");
+                    leadlabs.push_back("Jet3");
 
                     return;
                 }
@@ -130,8 +137,8 @@ namespace Rivet {
 
                 foreach (const string& flav, flavors)
                     foreach (const string& lab, labels)
-                        foreach (const string& leadlab, leadlabs)
-                            bookLabelHistos(leadlab + "_" + flav + "_" + lab);
+                    foreach (const string& leadlab, leadlabs)
+                    bookLabelHistos(leadlab + "_" + flav + "_" + lab);
 
                 for (unsigned int i = 0; i < labels.size(); i++)
                     for (unsigned int j = i+1; j < labels.size(); j++)
@@ -286,20 +293,20 @@ namespace Rivet {
                     LabeledJet jet(j);
                     fillJetLabels(jet);
 
-                    fillLabelHistos(jet, weight, "Inclusive");
+                    fillLabelHistos("Inclusive", jet, weight);
 
                     switch (iJet) {
                         case 0:
-                            fillLabelHistos(jet, weight, "Jet0");
+                            fillLabelHistos("Jet0", jet, weight);
                             break;
                         case 1:
-                            fillLabelHistos(jet, weight, "Jet1");
+                            fillLabelHistos("Jet1", jet, weight);
                             break;
                         case 2:
-                            fillLabelHistos(jet, weight, "Jet2");
+                            fillLabelHistos("Jet2", jet, weight);
                             break;
                         case 3:
-                            fillLabelHistos(jet, weight, "Jet3");
+                            fillLabelHistos("Jet3", jet, weight);
                             break;
                     }
 
@@ -330,6 +337,8 @@ namespace Rivet {
         private:
 
             void bookLabelHistos(const string& basename) {
+
+                MSG_DEBUG(string("booking label histograms: ") + basename);
 
                 histos1D[basename + "_Pt"] =
                     bookHisto1D(basename + "_Pt", 50, 0, 100*GeV, "$p_T$",
@@ -365,10 +374,12 @@ namespace Rivet {
 
 
             // jet cannot be const because of default Particle return.
-            void fillLabelHistos(LabeledJet& jet, double weight,
-                    const string& prefix) {
+            void fillLabelHistos(const string& prefix, LabeledJet& jet, double weight) {
+
+                MSG_DEBUG(string("filling label histograms: ") + prefix);
 
                 double pt = jet.pt();
+                cout << "pt: " << pt << endl;
                 foreach (const string& lab, labels) {
                     const Particle& labelpart = jet[lab];
                     double dpt = 1 - labelpart.pt()/pt;
@@ -409,6 +420,8 @@ namespace Rivet {
 
             // fills in the labels for a given jet
             void fillJetLabels(LabeledJet& jet) {
+                MSG_DEBUG("fillng jet labels.");
+
                 FourMomentum jp4 = momentum(jet);
 
                 // for recluster labling

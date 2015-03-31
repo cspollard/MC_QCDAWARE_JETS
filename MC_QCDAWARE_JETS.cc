@@ -72,15 +72,31 @@ namespace Rivet {
             MC_QCDAWARE_JETS()
                 : Analysis("MC_QCDAWARE_JETS"),
                 maxLabelDr(0.2) {    
-                    static const string tmpflavors[] = {"Unlabeled", "Gluon", "Light", "Charm", "Bottom", "Photon", "Electron", "Muon", "Tau"};
-                    static const string tmpleadlabs[] = {"Inclusive", "Jet0", "Jet1", "Jet2", "Jet3"};
-                    static const string tmplabels[] = {"Akt", "Kt", "MaxPt", "Reclustered"};
-                    static const string tmplabelsTex[] = {"anti-$k_t$ label", "$k_t$ label", "max-$p_T$ label", "reclustered $k_t$ label"};
+                    flavors.push_back("Unlabeled");
+                    flavors.push_back("Gluon");
+                    flavors.push_back("Light");
+                    flavors.push_back("Charm");
+                    flavors.push_back("Bottom");
+                    flavors.push_back("Photon");
+                    flavors.push_back("Electron");
+                    flavors.push_back("Muon");
+                    flavors.push_back("Tau");
 
-                    flavors.assign(tmpflavors, tmpflavors + sizeof(tmpflavors)/sizeof(tmpflavors[0]));
-                    leadlabs.assign(tmpleadlabs, tmpleadlabs + sizeof(tmpleadlabs)/sizeof(tmpleadlabs[0]));
-                    labels.assign(tmplabels, tmplabels + sizeof(tmplabels)/sizeof(tmplabels[0]));
-                    labelsTex.assign(tmplabelsTex, tmplabelsTex + sizeof(tmplabelsTex)/sizeof(tmplabelsTex[0]));
+                    leadlabs.push_back("Inclusive");
+                    leadlabs.push_back("Jet0");
+                    leadlabs.push_back("Jet1");
+                    leadlabs.push_back("Jet2");
+                    leadlabs.push_back("Jet3");
+
+                    labels.push_back("Akt");
+                    labels.push_back("Kt");
+                    labels.push_back("MaxPt");
+                    labels.push_back("Reclustered");
+
+                    labelsTex.push_back("anti-$k_t$ label");
+                    labelsTex.push_back("$k_t$ label");
+                    labelsTex.push_back("max-$p_T$ label");
+                    labelsTex.push_back("reclustered $k_t$ label");
 
                     return;
                 }

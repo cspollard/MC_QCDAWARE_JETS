@@ -52,18 +52,14 @@ namespace Rivet {
 
                 addProjection(FastJets(fps, FastJets::ANTIKT, 0.4), "AntiKt04FinalPartonJets");
                 addProjection(FastJets(fps, FastJets::KT, 0.4), "Kt04FinalPartonJets");
-                addProjection(FastJets(fps, FastJets::CAM, 0.4), "CA04FinalPartonJets");
 
                 fastjet::contrib::AntiKtMeasure *aktdm =
                     new fastjet::contrib::AntiKtMeasure(0.4);
                 fastjet::contrib::KtMeasure *ktdm =
                     new fastjet::contrib::KtMeasure(0.4);
-                fastjet::contrib::CAMeasure *cadm =
-                    new fastjet::contrib::CAMeasure(0.4);
 
                 qcdawareakt = new fastjet::contrib::QCDAware(aktdm);
                 qcdawarekt = new fastjet::contrib::QCDAware(ktdm);
-                qcdawareca = new fastjet::contrib::QCDAware(cadm);
 
                 // book labeling histograms
                 bookLabelHistos("GluonAkt");
@@ -83,15 +79,6 @@ namespace Rivet {
                 bookLabelHistos("ElectronKt");
                 bookLabelHistos("MuonKt");
                 bookLabelHistos("TauKt");
-
-                bookLabelHistos("GluonCA");
-                bookLabelHistos("LightCA");
-                bookLabelHistos("CharmCA");
-                bookLabelHistos("BottomCA");
-                bookLabelHistos("PhotonCA");
-                bookLabelHistos("ElectronCA");
-                bookLabelHistos("MuonCA");
-                bookLabelHistos("TauCA");
 
                 bookLabelHistos("GluonReclustered");
                 bookLabelHistos("LightReclustered");
@@ -116,62 +103,35 @@ namespace Rivet {
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
                 histos1D["UnlabeledKtPt"] = bookHisto1D("UnlabeledKtPt",
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
-                histos1D["UnlabeledCAPt"] = bookHisto1D("UnlabeledCAPt",
-                        50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
                 histos1D["UnlabeledMaxPtPt"] = bookHisto1D("UnlabeledMaxPtPt",
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
                 histos1D["UnlabeledReclusteredPt"] = bookHisto1D("UnlabeledReclusteredPt",
                         50, 0, 100*GeV, "$p_T$", "$p_T$ / GeV", "entries");
 
-                histos2D["AktLabVsKtLab"] = bookHisto2D("AktLabVsKtLab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "anti-$k_t$ label vs $k_t$ label",
-                        "anti-$k_t$ label", "$k_t$ label", "entries");
+                // book label comparison histograms
+                histos2D["AktLabVsKtLab"] = bookLabelComparison(
+                        "Akt", "anti-$k_t$ label",
+                        "Kt", "$k_t$ label");
 
-                histos2D["AktLabVsCALab"] = bookHisto2D("AktLabVsCALab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "anti-$k_t$ label vs C/A label",
-                        "anti-$k_t$ label", "C/A label", "entries");
+                histos2D["AktLabVsMaxPtLab"] = bookLabelComparison(
+                        "Akt", "anti-$k_t$ label",
+                        "MaxPt", "max-$p_T$ label");
 
-                histos2D["KtLabVsCALab"] = bookHisto2D("KtLabVsCALab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "$k_t$ label vs C/A label",
-                        "$k_t$ label", "C/A label", "entries");
+                histos2D["AktLabVsReclusteredLab"] = bookLabelComparison(
+                        "Akt", "anti-$k_t$ label",
+                        "Reclustered", "reclustered $k_t$ label");
 
-                histos2D["AktLabVsMaxPtLab"] = bookHisto2D("AktLabVsMaxPtLab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "anti-$k_t$ label vs max-$p_T$ label",
-                        "anti-$k_t$ label", "max-$p_T$ label", "entries");
+                histos2D["KtLabVsMaxPtLab"] = bookLabelComparison(
+                        "Kt", "$k_t$ label",
+                        "MaxPt", "max-$p_T$ label");
 
-                histos2D["KtLabVsMaxPtLab"] = bookHisto2D("KtLabVsMaxPtLab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "$k_t$ label vs max-$p_T$ label",
-                        "$k_t$ label", "max-$p_T$ label", "entries");
+                histos2D["KtLabVsReclusteredLab"] = bookLabelComparison(
+                        "Kt", "$k_t$ label",
+                        "Reclustered", "reclustered $k_t$ label");
 
-                histos2D["CALabVsMaxPtLab"] = bookHisto2D("CALabVsMaxPtLab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "C/A label vs max-$p_T$ label",
-                        "C/A label", "max-$p_T$ label", "entries");
-
-                histos2D["AktLabVsReclusteredLab"] = bookHisto2D("AktLabVsReclusteredLab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "anti-$k_t$ label vs reclustered $k_t$ label",
-                        "anti-$k_t$ label", "reclustered $k_t$ label", "entries");
-
-                histos2D["KtLabVsReclusteredLab"] = bookHisto2D("KtLabVsReclusteredLab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "$k_t$ label vs reclustered $k_t$ label",
-                        "$k_t$ label", "reclustered $k_t$ label", "entries");
-
-                histos2D["CALabVsReclusteredLab"] = bookHisto2D("CALabVsReclusteredLab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "C/A label vs reclustered $k_t$ label",
-                        "C/A label", "reclustered $k_t$ label", "entries");
-
-                histos2D["MaxPtLabVsReclusteredLab"] = bookHisto2D("MaxPtLabVsReclusteredLab",
-                        51, -25.5, 25.5, 51, -25.5, 25.5,
-                        "max-$p_T$ label vs reclustered $k_t$ parton label",
-                        "max-$p_T$ label", "reclustered $k_t$ label", "entries");
+                histos2D["MaxPtLabVsReclusteredLab"] = bookLabelComparison(
+                        "MaxPt", "max-$p_T$ label",
+                        "Reclustered", "reclustered $k_t$ label");
             }
 
 
@@ -262,17 +222,12 @@ namespace Rivet {
 
                 ClusterSequence qcdawareaktcs(partonPJs, qcdawareakt);
                 ClusterSequence qcdawarektcs(partonPJs, qcdawarekt);
-                ClusterSequence qcdawarecacs(partonPJs, qcdawareca);
 
                 const vector<PseudoJet> aktPartonJets =
                     sorted_by_pt(qcdawareaktcs.inclusive_jets(5*GeV));
 
                 const vector<PseudoJet> ktPartonJets =
                     sorted_by_pt(qcdawarektcs.inclusive_jets(5*GeV));
-
-                const vector<PseudoJet> caPartonJets =
-                    sorted_by_pt(qcdawarecacs.inclusive_jets(5*GeV));
-
 
                 // now particle jets
                 const Particles& visibleParts =
@@ -297,11 +252,6 @@ namespace Rivet {
                             ghost(Particle(ktPJ.user_index(), momentum(ktPJ)),
                                 "GAKtPartonJet", ktPJ.user_index()));
 
-                foreach (const PseudoJet& caPJ, caPartonJets)
-                    particlePJs.push_back(
-                            ghost(Particle(caPJ.user_index(), momentum(caPJ)),
-                                "GACAPartonJet", caPJ.user_index()));
-
                 // ghost association of final partons to particle jets
                 foreach (const Particle& part, partonJetInputs)
                     particlePJs.push_back(ghost(part, "GAFinalParton", part.pid()));
@@ -320,18 +270,16 @@ namespace Rivet {
 
                 ClusterSequence akt04cs(particlePJs, JetDefinition(antikt_algorithm, 0.4));
                 ClusterSequence kt04cs(particlePJs, JetDefinition(kt_algorithm, 0.4));
-                ClusterSequence ca04cs(particlePJs, JetDefinition(cambridge_algorithm, 0.4));
 
                 const vector<PseudoJet> aktJets = sorted_by_pt(akt04cs.inclusive_jets(25*GeV));
                 const vector<PseudoJet> ktJets = sorted_by_pt(kt04cs.inclusive_jets(25*GeV));
-                const vector<PseudoJet> caJets = sorted_by_pt(ca04cs.inclusive_jets(25*GeV));
 
                 foreach (const PseudoJet& j, aktJets) {
 
                     FourMomentum jp4 = momentum(j);
 
                     // particle labels
-                    Particle aktLabel, ktLabel, caLabel, maxptLabel;
+                    Particle aktLabel, ktLabel, maxptLabel;
 
                     // for cluster relabling
                     vector<PseudoJet> partonReclusteredInputs;
@@ -379,11 +327,6 @@ namespace Rivet {
                                 deltaR(jp4, part) < deltaR(jp4, ktLabel)))
                             ktLabel = part;
 
-                        else if (s == "GACAPartonJet" &&
-                                (!caLabel.pt() ||
-                                deltaR(jp4, part) < deltaR(jp4, caLabel)))
-                            caLabel = part;
-
                     }
 
                     // recluster ghost-matched partons
@@ -398,7 +341,7 @@ namespace Rivet {
                             reclusterKtLabel = Particle(pj.user_index(), momentum(pj));
                     }
 
-                    int aktpid, ktpid, capid, maxptpid, reclusterktpid;
+                    int aktpid, ktpid, maxptpid, reclusterktpid;
 
                     if (maxptLabel.pT()) {
                         maxptpid = maxptLabel.pid();
@@ -436,24 +379,11 @@ namespace Rivet {
                         histos1D["UnlabeledKtPt"]->fill(j.pt(), weight);
                     }
 
-                    if (caLabel.pT()) {
-                        capid = caLabel.pid();
-                        string name = pidToLabel(capid) + "CA";
-                        fillLabelHistos(name, weight, jp4, caLabel.mom());
-                    } else {
-                        capid = 0;
-                        histos1D["UnlabeledCAPt"]->fill(j.pt(), weight);
-                    }
-
                     histos2D["AktLabVsKtLab"]->fill(aktpid, ktpid, weight);
-                    histos2D["AktLabVsCALab"]->fill(aktpid, capid, weight);
-                    histos2D["KtLabVsCALab"]->fill(ktpid, capid, weight);
                     histos2D["AktLabVsMaxPtLab"]->fill(aktpid, maxptpid, weight);
-                    histos2D["KtLabVsMaxPtLab"]->fill(ktpid, maxptpid, weight);
-                    histos2D["CALabVsMaxPtLab"]->fill(capid, maxptpid, weight);
                     histos2D["AktLabVsReclusteredLab"]->fill(aktpid, reclusterktpid, weight);
+                    histos2D["KtLabVsMaxPtLab"]->fill(ktpid, maxptpid, weight);
                     histos2D["KtLabVsReclusteredLab"]->fill(ktpid, reclusterktpid, weight);
-                    histos2D["CALabVsReclusteredLab"]->fill(capid, reclusterktpid, weight);
                     histos2D["MaxPtLabVsReclusteredLab"]->fill(maxptpid, reclusterktpid, weight);
                 }
 
@@ -485,7 +415,6 @@ namespace Rivet {
 
             QCDAware *qcdawareakt;
             QCDAware *qcdawarekt;
-            QCDAware *qcdawareca;
 
             std::map<string, Histo1DPtr> histos1D;
             std::map<string, Profile1DPtr> profiles1D;
@@ -542,6 +471,16 @@ namespace Rivet {
                 profiles1D[basename + "MeanDptVsPt"]->fill(pt, dpt, weight);
                 histos2D[basename + "DrDpt"]->fill(dr, dpt, weight);
 
+            }
+
+            Histo2DPtr bookLabelComparison(
+                    const string& lab1, const string& axis1,
+                    const string& lab2, const string& axis2) {
+
+                return bookHisto2D(lab1 + "LabVs" + lab2 + "Lab",
+                        51, -25.5, 25.5, 51, -25.5, 25.5,
+                        axis1 + " vs " + axis2,
+                        axis1, axis2, "entries");
             }
 
 

@@ -168,7 +168,7 @@ namespace Rivet {
                     partonJetInputs.push_back(part);
                 }
 
-                // leptons and photons
+                // electrons, muons, and photons
                 foreach (const Particle& part, lepsgammas) {
                     // deal with tau decay products later.
                     if (part.fromDecay())
@@ -180,12 +180,13 @@ namespace Rivet {
                     partonJetInputs.push_back(part);
                 }
 
-                // hadronic taus
+                // taus
                 foreach (const Particle& tau, taus) {
                     // reject taus from hadron decays and tau chains
                     if (tau.fromDecay())
                         continue;
 
+                    bool hadtau = false;
 
                     // TODO
                     // this shouldn't be necessary...
@@ -196,9 +197,15 @@ namespace Rivet {
 
                         if (p.isHadron()) {
                             partonJetInputs.push_back(tau);
+                            hadtau = true;
                             break;
                         }
                     }
+
+                    // break out of loop if we already labeled this as
+                    // a hadronic tau.
+                    if (hadtau)
+                        break;
 
                     // this isn't a hadronic tau.
                     // all stable descendants of leptonic taus should
@@ -250,15 +257,17 @@ namespace Rivet {
                 }
 
                 // ghost association of parton jets to particle jets
-                foreach (const PseudoJet& aktPJ, aktPartonJets)
+                foreach (const PseudoJet& aktPJ, aktPartonJets) {
                     particlePJs.push_back(
                             ghost(Particle(aktPJ.user_index(), momentum(aktPJ)),
                                 "GAAktPartonJet", aktPJ.user_index()));
+                }
 
-                foreach (const PseudoJet& ktPJ, ktPartonJets)
+                foreach (const PseudoJet& ktPJ, ktPartonJets) {
                     particlePJs.push_back(
                             ghost(Particle(ktPJ.user_index(), momentum(ktPJ)),
                                 "GAKtPartonJet", ktPJ.user_index()));
+                }
 
                 // ghost association of final partons to particle jets
                 foreach (const Particle& part, partonJetInputs)
@@ -368,8 +377,6 @@ namespace Rivet {
             // jet cannot be const because of default Particle return.
             void fillLabelHistos(const string& prefix, LabeledJet& labjet, double weight) {
 
-                MSG_DEBUG(string("filling label histograms: ") + prefix);
-
                 double pt = labjet.pseudojet().pt();
                 foreach (const string& lab, labels) {
                     const Particle& labelpart = labjet[lab];
@@ -379,6 +386,9 @@ namespace Rivet {
                     const string basename = prefix + "_" +
                         pidToLabel(labelpart.pid()) + "_" +
                         lab;
+
+                    MSG_DEBUG(string("filling label histogram: ") + basename);
+
 
                     histos1D[basename + "_Pt"]->fill(pt, weight);
                     histos1D[basename + "_Dpt"]->fill(dpt, weight);
@@ -444,7 +454,7 @@ namespace Rivet {
                         // note the highest-pt parton
                         if (part.pT() > labjet["MaxPt"].pT()) {
                             labjet["MaxPt"] = part;
-                            MSG_DEBUG("giving jet MaxPt label.");
+                            MSG_DEBUG("giving jet MaxPt label");
                         }
 
                         continue;

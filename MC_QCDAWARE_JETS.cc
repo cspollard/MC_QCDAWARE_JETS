@@ -66,6 +66,7 @@ namespace Rivet {
         public:
 
             /// Constructor
+            // TODO
             // this is really, really ugly.
             MC_QCDAWARE_JETS()
                 : Analysis("MC_QCDAWARE_JETS"),

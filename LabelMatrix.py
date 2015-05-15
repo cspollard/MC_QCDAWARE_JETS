@@ -6,14 +6,11 @@ import re
 from sys import stdout
 
 binning = list(enumerate([
-    ("unlabeled", [0]),
+    ("none", [0]),
     ("$g$", [21]),
-    ("$q$", [1, 2, 3]),
-    ("$\\bar q$", [-1, -2, -3]),
-    ("$c$", [4]),
-    ("$\\bar c$", [-4]),
-    ("$b$", [5]),
-    ("$\\bar b$", [-5]),
+    ("$q$", [-3, -2, -1, 1, 2, 3]),
+    ("$c$", [-4, 4]),
+    ("$b$", [-5, 5]),
     ("$\\gamma$", [22]),
     ("$e^-$", [11]),
     ("$e^+$", [-11]),
@@ -21,10 +18,6 @@ binning = list(enumerate([
     ("$\\mu^+$", [-13]),
     ("$\\tau$", [15])
     ]))
-
-binningAnnotation = '\t'.join(map(
-        lambda (n, (lab, _)): "%02.2f\t\"%s\"" % ((n+0.5), lab),
-        binning))
 
 
 def histBinToMatrixBin(b):
@@ -47,19 +40,25 @@ def histBinToMatrixBin(b):
             if xbin >= 0 and ybin >= 0:
                 break
 
-
         continue
 
     return (xbin, ybin)
 
 
-def histToMatrix(hobj):
-    hMatrix = yoda.Histo2D(14, 0, 14, 14, 0, 14,
+def histToMatrix(hobj, nbins):
+    hMatrix = yoda.Histo2D(nbins, 0, nbins, nbins, 0, nbins,
             hobj.path + "_matrix", "jet label matrix")
+
+    binningAnnotation = '\t'.join(map(
+            lambda (n, (lab, _)): "%02.2f\t%s" % ((n+0.5), lab),
+            binning[:nbins]))
 
     hMatrix.setAnnotation("XCustomMajorTicks", binningAnnotation)
     hMatrix.setAnnotation("YCustomMajorTicks", binningAnnotation)
     hMatrix.setAnnotation("PlotTickLabels", "1")
+    hMatrix.setAnnotation("PlotXMajorTicks", "0")
+    hMatrix.setAnnotation("ZLabel", "arbitrary")
+    hMatrix.setAnnotation("ZCustomMajorTicks", "0.5\t$ $")
 
 
     for b in hobj.bins:
@@ -67,8 +66,7 @@ def histToMatrix(hobj):
         hMatrix.fill(xbin, ybin, b.sumW)
         continue
 
-    # TODO
-    # bin labels
+
 
     return hMatrix
 
@@ -104,7 +102,7 @@ def main():
 
         print("found label " + lab); stdout.flush()
 
-        aos.append(histToMatrix(ao))
+        aos.append(histToMatrix(ao, 5))
         continue
 
     yoda.write(aos, args[1])

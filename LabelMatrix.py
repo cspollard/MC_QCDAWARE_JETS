@@ -58,17 +58,58 @@ def histToMatrix(hobj, nbins):
     hMatrix.setAnnotation("PlotTickLabels", "1")
     hMatrix.setAnnotation("PlotXMajorTicks", "0")
     hMatrix.setAnnotation("ZLabel", "arbitrary")
+    hMatrix.setAnnotation("XLabel", hobj.annotation("XLabel"))
+    hMatrix.setAnnotation("YLabel", hobj.annotation("YLabel"))
     hMatrix.setAnnotation("ZCustomMajorTicks", "0.5\t$ $")
 
 
+    hobj.normalize(1.0)
     for b in hobj.bins:
         xbin, ybin = histBinToMatrixBin(b)
         hMatrix.fill(xbin, ybin, b.sumW)
         continue
 
-
-
     return hMatrix
+
+
+def matrixToLatex(m):
+    labels = m.annotation("XCustomMajorTicks").split('\t')[1::2]
+    xlab = m.annotation("XLabel")
+    ylab = m.annotation("YLabel")
+
+    l = len(labels)
+
+    valuestable = [ map( lambda b: "%0.2f" % (100*b.volume),
+                m.bins[l*i:l*(i+1)] ) for i in range(len(labels))]
+
+
+    fstrow = "     & & \\multicolumn{%s}{c}{%s} \\\\" % (l, ylab)
+    secrow = "     & & %s \\\\" % (" & ".join(labels))
+    trdrow = "    \\multirow{%s}{*}{\\rotatebox{90}{%s}} & %s & %s \\\\" \
+            % (l, xlab, labels[0], " & ".join(valuestable[0]) )
+
+    restrows = ["     & %s & %s \\\\" % (labels[i], " & ".join(valuestable[i]) ) \
+            for i in range(1, len(labels)) ]
+
+    rows = [fstrow, secrow, trdrow] + restrows
+
+    rows.insert(0, "    \\toprule")
+    rows.insert(2, "    \\midrule")
+    rows.insert(4, "    \\midrule")
+    rows.append("    \\bottomrule")
+    rowstext = '\n'.join(rows)
+
+
+    tex = """\
+\\begin{table}[t]
+  \\centering
+  \\begin{tabular}{%s}
+%s
+  \\end{tabular}
+\\end{table}""" % ("|c|c|" + 'c'*l, rowstext)
+
+    return tex
+
 
 def main():
     op = optparse.OptionParser()
@@ -93,6 +134,7 @@ def main():
     label = re.compile("|".join(labels))
 
     aos = []
+    texs = []
     for k, ao in aodict.iteritems():
         m = label.search(k)
         if m:
@@ -102,10 +144,14 @@ def main():
 
         print("found label " + lab); stdout.flush()
 
-        aos.append(histToMatrix(ao, 5))
+        m = histToMatrix(ao, 6)
+        aos.append(m)
+        texs.append(matrixToLatex(m))
         continue
 
     yoda.write(aos, args[1])
+
+    open(args[2], 'w').write("\n\n".join(texs))
 
     return 0
 

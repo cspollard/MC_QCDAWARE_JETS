@@ -1,7 +1,7 @@
 // -*- C++ -*-
 #include "fastjet/JetDefinition.hh"
 #include "fastjet/ClusterSequence.hh"
-#include "fastjet/contrib/QCDAware.hh"
+#include "fastjet/contrib/QCDAwarePlugin.hh"
 
 #include "Rivet/Analysis.hh"
 #include "Rivet/Jet.hh"
@@ -16,7 +16,7 @@
 
 using namespace std;
 using namespace fastjet;
-using namespace fastjet::contrib;
+using namespace fastjet::contrib; //::QCDAwarePlugin;
 
 namespace Rivet {
 
@@ -55,9 +55,9 @@ namespace Rivet {
 
             double maxLabelDr;
 
-            QCDAware *qcdawareakt;
-            QCDAware *qcdawarekt;
-            QCDAware *qcdawareca;
+            QCDAwarePlugin::QCDAwarePlugin *qcdawareakt;
+            QCDAwarePlugin::QCDAwarePlugin *qcdawarekt;
+            QCDAwarePlugin::QCDAwarePlugin *qcdawareca;
 
             std::map<string, Histo1DPtr> histos1D;
             std::map<string, Profile1DPtr> profiles1D;
@@ -122,16 +122,16 @@ namespace Rivet {
                 TauFinder taufs(TauFinder::ANY);
                 addProjection(taufs, "Taus");
 
-                fastjet::contrib::AntiKtMeasure *aktdm =
-                    new fastjet::contrib::AntiKtMeasure(0.4);
-                fastjet::contrib::KtMeasure *ktdm =
-                    new fastjet::contrib::KtMeasure(0.4);
-                fastjet::contrib::CAMeasure *cadm =
-                    new fastjet::contrib::CAMeasure(0.4);
+                QCDAwarePlugin::AntiKtMeasure *aktdm =
+                    new QCDAwarePlugin::AntiKtMeasure(0.4);
+                QCDAwarePlugin::KtMeasure *ktdm =
+                    new QCDAwarePlugin::KtMeasure(0.4);
+                QCDAwarePlugin::CAMeasure *cadm =
+                    new QCDAwarePlugin::CAMeasure(0.4);
 
-                qcdawareakt = new fastjet::contrib::QCDAware(aktdm);
-                qcdawarekt = new fastjet::contrib::QCDAware(ktdm);
-                qcdawareca = new fastjet::contrib::QCDAware(cadm);
+                qcdawareakt = new QCDAwarePlugin::QCDAwarePlugin(aktdm);
+                qcdawarekt = new QCDAwarePlugin::QCDAwarePlugin(ktdm);
+                qcdawareca = new QCDAwarePlugin::QCDAwarePlugin(cadm);
 
 
                 foreach (const string& flav, flavors)
@@ -158,7 +158,7 @@ namespace Rivet {
                 const Particles& finalPartons =
                     applyProjection<FinalPartons>(event, "FinalPartons").particles();
 
-                const Particles& lepsgammas = 
+                const Particles& lepsgammas =
                     applyProjection<IdentifiedFinalState>(event, "ElectronsMuonsPhotons").particles();
 
                 const Particles& taus =

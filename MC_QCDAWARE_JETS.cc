@@ -16,7 +16,7 @@
 
 using namespace std;
 using namespace fastjet;
-using namespace fastjet::contrib; //::QCDAwarePlugin;
+using namespace fastjet::contrib::QCDAwarePlugin;
 
 namespace Rivet {
 
@@ -55,9 +55,9 @@ namespace Rivet {
 
             double maxLabelDr;
 
-            QCDAwarePlugin::QCDAwarePlugin *qcdawareakt;
-            QCDAwarePlugin::QCDAwarePlugin *qcdawarekt;
-            QCDAwarePlugin::QCDAwarePlugin *qcdawareca;
+            QCDAwarePlugin *qcdawareakt;
+            QCDAwarePlugin *qcdawarekt;
+            QCDAwarePlugin *qcdawareca;
 
             std::map<string, Histo1DPtr> histos1D;
             std::map<string, Profile1DPtr> profiles1D;
@@ -122,16 +122,13 @@ namespace Rivet {
                 TauFinder taufs(TauFinder::ANY);
                 addProjection(taufs, "Taus");
 
-                QCDAwarePlugin::AntiKtMeasure *aktdm =
-                    new QCDAwarePlugin::AntiKtMeasure(0.4);
-                QCDAwarePlugin::KtMeasure *ktdm =
-                    new QCDAwarePlugin::KtMeasure(0.4);
-                QCDAwarePlugin::CAMeasure *cadm =
-                    new QCDAwarePlugin::CAMeasure(0.4);
+                DistanceMeasure *aktdm = new AntiKtMeasure(0.4);
+                DistanceMeasure *ktdm = new KtMeasure(0.4);
+                DistanceMeasure *cadm = new CAMeasure(0.4);
 
-                qcdawareakt = new QCDAwarePlugin::QCDAwarePlugin(aktdm);
-                qcdawarekt = new QCDAwarePlugin::QCDAwarePlugin(ktdm);
-                qcdawareca = new QCDAwarePlugin::QCDAwarePlugin(cadm);
+                qcdawareakt = new QCDAwarePlugin(aktdm);
+                qcdawarekt = new QCDAwarePlugin(ktdm);
+                qcdawareca = new QCDAwarePlugin(cadm);
 
 
                 foreach (const string& flav, flavors)

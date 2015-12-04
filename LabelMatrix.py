@@ -72,6 +72,13 @@ def histToMatrix(hobj, nbins):
     return hMatrix
 
 
+def roundText(n):
+    if n > 0.1:
+        return "%0.1f" % n
+    else:
+        return "-"
+
+
 def matrixToLatex(m):
     labels = m.annotation("XCustomMajorTicks").split('\t')[1::2]
     xlab = m.annotation("XLabel")
@@ -79,12 +86,12 @@ def matrixToLatex(m):
 
     l = len(labels)
 
-    valuestable = [ map( lambda b: "%0.2f" % (100*b.volume),
+    valuestable = [ map(lambda b: roundText(100*b.volume),
                 m.bins[l*i:l*(i+1)] ) for i in range(len(labels))]
 
 
-    fstrow = "     & & \\multicolumn{%s}{c}{%s} \\\\" % (l, ylab)
-    secrow = "     & & %s \\\\" % (" & ".join(labels))
+    fstrow = "    \\multicolumn{2}{|c|}{ } & \\multicolumn{%s}{c|}{%s} \\\\" % (l, ylab)
+    secrow = "    \\multicolumn{2}{|c|}{ } & %s \\\\" % (" & ".join(labels))
     trdrow = "    \\multirow{%s}{*}{\\rotatebox{90}{%s}} & %s & %s \\\\" \
             % (l, xlab, labels[0], " & ".join(valuestable[0]) )
 
@@ -93,10 +100,10 @@ def matrixToLatex(m):
 
     rows = [fstrow, secrow, trdrow] + restrows
 
-    rows.insert(0, "    \\toprule")
-    rows.insert(2, "    \\midrule")
-    rows.insert(4, "    \\midrule")
-    rows.append("    \\bottomrule")
+    rows.insert(0, "    \\hline")
+    rows.insert(2, "    \\cline{3-%s}" % (l+2))
+    rows.insert(4, "    \\hline")
+    rows.append("    \\hline")
     rowstext = '\n'.join(rows)
 
 
@@ -106,7 +113,7 @@ def matrixToLatex(m):
   \\begin{tabular}{%s}
 %s
   \\end{tabular}
-\\end{table}""" % ("|c|c|" + 'c'*l, rowstext)
+\\end{table}""" % ("|c|c|" + 'c'*l + "|", rowstext)
 
     return tex
 
@@ -146,7 +153,7 @@ def main():
 
         m = histToMatrix(ao, 6)
         aos.append(m)
-        texs.append(matrixToLatex(m))
+        texs.append(m.path + "\n" + matrixToLatex(m))
         continue
 
     yoda.write(aos, args[1])

@@ -66,9 +66,17 @@ def histToMatrix(hobj, nbins):
         hMatrix.fill(xbin, ybin, b.sumW)
         continue
 
-
-
     return hMatrix
+
+
+def matrixToLatex(m):
+    labels = m.annotation("XCustomMajorTicks").split('\t')[0::2]
+    for (l, b) in (labels, hobj.bins):
+        print(l, b)
+        continue
+
+    return
+
 
 def main():
     op = optparse.OptionParser()
@@ -102,7 +110,9 @@ def main():
 
         print("found label " + lab); stdout.flush()
 
-        aos.append(histToMatrix(ao, 5))
+        m = histToMatrix(ao, 5)
+        matrixToLatex(m)
+        aos.append(m)
         continue
 
     yoda.write(aos, args[1])

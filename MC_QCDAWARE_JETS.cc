@@ -1,7 +1,7 @@
 // -*- C++ -*-
 #include "fastjet/JetDefinition.hh"
 #include "fastjet/ClusterSequence.hh"
-#include "fastjet/contrib/QCDAware.hh"
+#include "fastjet/contrib/QCDAwarePlugin.hh"
 
 #include "Rivet/Analysis.hh"
 #include "Rivet/Jet.hh"
@@ -16,7 +16,7 @@
 
 using namespace std;
 using namespace fastjet;
-using namespace fastjet::contrib;
+using namespace fastjet::contrib::QCDAwarePlugin;
 
 namespace Rivet {
 
@@ -55,8 +55,9 @@ namespace Rivet {
 
             double maxLabelDr;
 
-            QCDAware *qcdawareakt;
-            QCDAware *qcdawarekt;
+            QCDAwarePlugin *qcdawareakt;
+            QCDAwarePlugin *qcdawarekt;
+            QCDAwarePlugin *qcdawareca;
 
             std::map<string, Histo1DPtr> histos1D;
             std::map<string, Profile1DPtr> profiles1D;
@@ -84,11 +85,13 @@ namespace Rivet {
 
                     labels.push_back("Akt");
                     labels.push_back("Kt");
+                    labels.push_back("CA");
                     labels.push_back("MaxPt");
                     labels.push_back("Reclustered");
 
                     labelsTex.push_back("anti-$k_t$ label");
                     labelsTex.push_back("$k_t$ label");
+                    labelsTex.push_back("C/A label");
                     labelsTex.push_back("max-$p_T$ label");
                     labelsTex.push_back("reclustered $k_t$ label");
 
@@ -119,13 +122,13 @@ namespace Rivet {
                 TauFinder taufs(TauFinder::ANY);
                 addProjection(taufs, "Taus");
 
-                fastjet::contrib::AntiKtMeasure *aktdm =
-                    new fastjet::contrib::AntiKtMeasure(0.4);
-                fastjet::contrib::KtMeasure *ktdm =
-                    new fastjet::contrib::KtMeasure(0.4);
+                DistanceMeasure *aktdm = new AntiKtMeasure(0.4);
+                DistanceMeasure *ktdm = new KtMeasure(0.4);
+                DistanceMeasure *cadm = new CAMeasure(0.4);
 
-                qcdawareakt = new fastjet::contrib::QCDAware(aktdm);
-                qcdawarekt = new fastjet::contrib::QCDAware(ktdm);
+                qcdawareakt = new QCDAwarePlugin(aktdm);
+                qcdawarekt = new QCDAwarePlugin(ktdm);
+                qcdawareca = new QCDAwarePlugin(cadm);
 
 
                 foreach (const string& flav, flavors)
@@ -152,7 +155,7 @@ namespace Rivet {
                 const Particles& finalPartons =
                     applyProjection<FinalPartons>(event, "FinalPartons").particles();
 
-                const Particles& lepsgammas = 
+                const Particles& lepsgammas =
                     applyProjection<IdentifiedFinalState>(event, "ElectronsMuonsPhotons").particles();
 
                 const Particles& taus =
@@ -238,12 +241,16 @@ namespace Rivet {
 
                 ClusterSequence qcdawareaktcs(partonPJs, qcdawareakt);
                 ClusterSequence qcdawarektcs(partonPJs, qcdawarekt);
+                ClusterSequence qcdawarecacs(partonPJs, qcdawareca);
 
                 const vector<PseudoJet> aktPartonJets =
                     sorted_by_pt(qcdawareaktcs.inclusive_jets(5*GeV));
 
                 const vector<PseudoJet> ktPartonJets =
                     sorted_by_pt(qcdawarektcs.inclusive_jets(5*GeV));
+
+                const vector<PseudoJet> caPartonJets =
+                    sorted_by_pt(qcdawarecacs.inclusive_jets(5*GeV));
 
                 // now particle jets
                 const Particles& visibleParts =
@@ -270,6 +277,12 @@ namespace Rivet {
                                 "GAKtPartonJet", ktPJ.user_index()));
                 }
 
+                foreach (const PseudoJet& caPJ, caPartonJets) {
+                    particlePJs.push_back(
+                            ghost(Particle(caPJ.user_index(), momentum(caPJ)),
+                                "GACAPartonJet", caPJ.user_index()));
+                }
+
                 // ghost association of final partons to particle jets
                 foreach (const Particle& part, partonJetInputs)
                     particlePJs.push_back(ghost(part, "GAFinalParton", part.pid()));
@@ -279,8 +292,8 @@ namespace Rivet {
                 foreach (const GenParticle* gp, Rivet::particles(event.genEvent())) {
                     Particle part(gp);
 
-                    // cut out non-partons and high-eta (including incoming) partons
-                    if (!isParton(part) || part.abseta() > 7.0)
+                    // cut out anything that isn't a photon or parton and any high-eta (including incoming) particles
+                    if (!(isParton(part) || isPhoton(part)) || part.abseta() > 7.0)
                         continue;
 
                     particlePJs.push_back(ghost(part, "GAParton", part.pid()));
@@ -477,6 +490,13 @@ namespace Rivet {
                              deltaR(jp4, part) < deltaR(jp4, labjet["Kt"]))) {
                         MSG_DEBUG("giving jet Kt label.");
                         labjet["Kt"] = part;
+                    }
+
+                    else if (s == "GACAPartonJet" &&
+                            (!labjet["CA"].pt() ||
+                             deltaR(jp4, part) < deltaR(jp4, labjet["CA"]))) {
+                        MSG_DEBUG("giving jet CA label.");
+                        labjet["CA"] = part;
                     }
                 }
 

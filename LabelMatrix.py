@@ -58,9 +58,12 @@ def histToMatrix(hobj, nbins):
     hMatrix.setAnnotation("PlotTickLabels", "1")
     hMatrix.setAnnotation("PlotXMajorTicks", "0")
     hMatrix.setAnnotation("ZLabel", "arbitrary")
+    hMatrix.setAnnotation("XLabel", hobj.annotation("XLabel"))
+    hMatrix.setAnnotation("YLabel", hobj.annotation("YLabel"))
     hMatrix.setAnnotation("ZCustomMajorTicks", "0.5\t$ $")
 
 
+    hobj.normalize(1.0)
     for b in hobj.bins:
         xbin, ybin = histBinToMatrixBin(b)
         hMatrix.fill(xbin, ybin, b.sumW)
@@ -69,13 +72,50 @@ def histToMatrix(hobj, nbins):
     return hMatrix
 
 
-def matrixToLatex(m):
-    labels = m.annotation("XCustomMajorTicks").split('\t')[0::2]
-    for (l, b) in (labels, hobj.bins):
-        print(l, b)
-        continue
+def roundText(n):
+    if n > 0.1:
+        return "%0.1f" % n
+    else:
+        return "-"
 
-    return
+
+def matrixToLatex(m):
+    labels = m.annotation("XCustomMajorTicks").split('\t')[1::2]
+    xlab = m.annotation("XLabel")
+    ylab = m.annotation("YLabel")
+
+    l = len(labels)
+
+    valuestable = [ map(lambda b: roundText(100*b.volume),
+                m.bins[l*i:l*(i+1)] ) for i in range(len(labels))]
+
+
+    fstrow = "    \\multicolumn{2}{|c|}{ } & \\multicolumn{%s}{c|}{%s} \\\\" % (l, ylab)
+    secrow = "    \\multicolumn{2}{|c|}{ } & %s \\\\" % (" & ".join(labels))
+    trdrow = "    \\multirow{%s}{*}{\\rotatebox{90}{%s}} & %s & %s \\\\" \
+            % (l, xlab, labels[0], " & ".join(valuestable[0]) )
+
+    restrows = ["     & %s & %s \\\\" % (labels[i], " & ".join(valuestable[i]) ) \
+            for i in range(1, len(labels)) ]
+
+    rows = [fstrow, secrow, trdrow] + restrows
+
+    rows.insert(0, "    \\hline")
+    rows.insert(2, "    \\cline{3-%s}" % (l+2))
+    rows.insert(4, "    \\hline")
+    rows.append("    \\hline")
+    rowstext = '\n'.join(rows)
+
+
+    tex = """\
+\\begin{table}[t]
+  \\centering
+  \\begin{tabular}{%s}
+%s
+  \\end{tabular}
+\\end{table}""" % ("|c|c|" + 'c'*l + "|", rowstext)
+
+    return tex
 
 
 def main():
@@ -101,6 +141,7 @@ def main():
     label = re.compile("|".join(labels))
 
     aos = []
+    texs = []
     for k, ao in aodict.iteritems():
         m = label.search(k)
         if m:
@@ -110,12 +151,14 @@ def main():
 
         print("found label " + lab); stdout.flush()
 
-        m = histToMatrix(ao, 5)
-        matrixToLatex(m)
+        m = histToMatrix(ao, 6)
         aos.append(m)
+        texs.append(m.path + "\n" + matrixToLatex(m))
         continue
 
     yoda.write(aos, args[1])
+
+    open(args[2], 'w').write("\n\n".join(texs))
 
     return 0
 
